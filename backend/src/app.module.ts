@@ -8,7 +8,6 @@ import { Information_blocks } from './orm/information_blocks.entity';
 import { CoursesModule } from './courses/courses.module';
 import { Information_blocksModule } from './information_blocks/information_blocks.module';
 
-
  
 
 @Module({
