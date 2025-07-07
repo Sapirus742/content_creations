@@ -7,13 +7,24 @@ import { Courses } from './orm/courses.entity';
 import { Information_blocks } from './orm/information_blocks.entity';
 import { CoursesModule } from './courses/courses.module';
 import { Information_blocksModule } from './information_blocks/information_blocks.module';
-
+import { JsonReaderModule } from './jsonreader/json-reader.module';
+import { FileUploadModule } from './file-upload/file-upload.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
  
 
 @Module({
 
   imports: [
+    MulterModule.register({
+      storage: memoryStorage(),
+      limits: {
+        fileSize: 50 * 1024 * 1024, // 50MB
+      },
+    }),
     CoursesModule,
+    JsonReaderModule,
+    FileUploadModule,
     Information_blocksModule,
     ConfigModule.forRoot({
       isGlobal: true,
