@@ -553,11 +553,11 @@ const submitAnswers = () => {
     return acc + (isAnswerCorrect(question, index) ? 1 : 0);
   }, 0);
   
-  $q.notify({
+  /*$q.notify({
     type: 'positive',
     message: `Тест завершен! Правильных ответов: ${score.value}/${selectedQuestions.value.length}`,
     position: 'top'
-  });
+  });*/
 };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getCurrentAnswer = (type: number, index: number): any => {
