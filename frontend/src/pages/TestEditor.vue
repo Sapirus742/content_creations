@@ -4,12 +4,26 @@
     
     <div class="row q-mb-md">
       <q-input v-model="test.time" label="Время на тест (секунды)" type="number" class="col-3" />
+       <q-input 
+        v-model="test.count" 
+        label="Количество случайных вопросов" 
+        type="number" 
+        min="0"
+        :max="Object.keys(questions).length"
+        class="col-3 q-ml-md" 
+      />
       <div class="col q-pl-md">
         <q-btn color="primary" label="Сохранить тест" @click="saveTest" />
       </div>
+      
     </div>
     
-    <div class="text-h6 q-mb-sm">Вопросы ({{ test.count }})</div>
+    <div class="text-h6 q-mb-sm">Всего вопросов: {{ Object.keys(questions).length }}</div>
+    <div class="text-subtitle2 q-mb-md" :class="{ 'text-negative': test.count > Object.keys(questions).length }">
+      Будет выбрано случайно: {{ test.count }}
+      <span v-if="test.count > Object.keys(questions).length" class="q-ml-sm">(Невозможно, уменьшите значение)</span>
+    </div>
+    
     
     <q-list bordered separator>
       <q-item v-for="(question, id) in questions" :key="id">
@@ -251,6 +265,22 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+    <q-dialog v-model="confirmDeleteDialog">
+    <q-card>
+      <q-card-section>
+        <div class="text-h6">Подтверждение удаления</div>
+      </q-card-section>
+
+      <q-card-section>
+        Вы уверены, что хотите удалить этот вопрос?
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="Отмена" color="primary" v-close-popup />
+        <q-btn flat label="Удалить" color="negative" @click="confirmDelete" v-close-popup />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
   </div>
 </template>
 
@@ -418,7 +448,7 @@ const loadTest = async () => {
             }
           }
         };
-        
+        if (question.chooses) await loadChoicesImages(question.chooses);
         if (question.chooses1) await loadChoicesImages(question.chooses1);
         if (question.chooses2) await loadChoicesImages(question.chooses2);
       }
@@ -497,24 +527,26 @@ const editQuestion = (id: string) => {
   showDialog.value = true;
 };
 
+const confirmDeleteDialog = ref(false);
+const questionToDelete = ref<string | null>(null);
+
 const deleteQuestion = (id: string) => {
-  $q.dialog({
-    title: 'Подтверждение',
-    message: 'Вы уверены, что хотите удалить этот вопрос?',
-    cancel: true,
-    persistent: true
-  }).onOk(() => {
-    delete test.value[id];
-    test.value.count--;
+  questionToDelete.value = id;
+  confirmDeleteDialog.value = true;
+};
+
+const confirmDelete = () => {
+  if (questionToDelete.value) {
+    delete test.value[questionToDelete.value];
     saveTest();
-  });
+    questionToDelete.value = null;
+  }
 };
 
 const saveQuestion = () => {
   if (editingId.value === 'new') {
     const newId = test.value.count.toString();
     test.value[newId] = editingQuestion.value;
-    test.value.count++;
   } else {
     test.value[editingId.value] = editingQuestion.value;
   }
