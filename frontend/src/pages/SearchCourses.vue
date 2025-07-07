@@ -62,7 +62,7 @@
                     v-for="lectureNum in block.lecture_numbers" 
                     :key="lectureNum"
                     clickable
-                    @click="openLecture(block.name, lectureNum)"
+                    @click="openLecture(block.name, lectureNum,`${block.id}_${block.name}`)"
                   >
                     <q-item-section avatar>
                       <q-icon name="menu_book" color="red" />
@@ -294,7 +294,7 @@ const preloadLecturesInfo = async () => {
     for (const course of courses.value) {
       for (const block of course.information_blocks) {
         for (const num of block.lecture_numbers) {
-          const lecture = await ContentHandler.getLectureInfo(block.name, num);
+          const lecture = await ContentHandler.getLectureInfo(block.name, num,`${block.id}_${block.name}`);
           if (lecture) {
             lecturesCache.value[`${block.name}_${num}`] = lecture;
           }
@@ -313,15 +313,15 @@ const preloadLecturesInfo = async () => {
 };
 
 // Методы для работы с лекциями
-const openLecture = async (blockName: string, lectureNum: number) => {
+const openLecture = async (blockName: string, lectureNum: number,lPath:string) => {
   try {
     const cacheKey = `${blockName}_${lectureNum}`;
 
-    console.log(cacheKey)
+    console.log(lPath)
     
     // Если лекции нет в кеше, пробуем загрузить
     if (!lecturesCache.value[cacheKey]) {
-      const lecture = await ContentHandler.getLectureInfo(blockName, lectureNum);
+      const lecture = await ContentHandler.getLectureInfo(blockName, lectureNum,lPath);
       if (!lecture) {
         throw new Error('Лекция не найдена');
       }
@@ -335,7 +335,7 @@ const openLecture = async (blockName: string, lectureNum: number) => {
 
     currentLecture.value = {
       title: `${lecture.number}. ${lecture.name}`,
-      url: `${lecture.url}?nocache=${Date.now()}`
+      url: `${lecture.url}`
     };
     
     lectureDialog.value = true;

@@ -52,8 +52,7 @@ export class ContentHandler {
   );
 }
 
-
-static async getLectureInfo(blockName: string, lectureNumber: number): Promise<LectureInfo | null> {
+static async getLectureInfo(blockName: string, lectureNumber: number,lPath:string): Promise<LectureInfo | null> {
   try {
     if (!this.contentData[blockName]) {
       console.warn(`Блок "${blockName}" не найден в файловой структуре`);
@@ -71,20 +70,25 @@ static async getLectureInfo(blockName: string, lectureNumber: number): Promise<L
       console.warn(`Лекция ${lectureNumber} не найдена в блоке "${blockName}"`);
       return null;
     }
-
-    const lectureUrl = this.generateUrl(blockName, lecture.file);
+    //Получаем имя файла начинающегося с этого id.
+    const response = await fetch(`http://localhost:3000/listfiles/list?path=${encodeURIComponent(lPath)}`);
     
-    if (!await this.checkFileExists(lectureUrl)) {
-      console.warn(`Файл лекции не найден: ${lectureUrl}`);
-      return null;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-
-    console.log(lecture)
+    
+    const data = await response.json();
+    
+    const foundFile = data.files.find((file: string) => 
+      file.startsWith(`${lectureNumber}_`) && file.endsWith('.mp4')
+    );
+    
+    const lectureUrl = 'http://localhost:3000/video-stream?path=';
 
     return {
       number: lecture.number,
       name: lecture.name || `Лекция ${lecture.number}`,
-      url: lectureUrl
+      url: lectureUrl+`${encodeURIComponent(lPath+'/'+foundFile)}`
     };
   } catch (error) {
     console.error(`Ошибка при получении лекции ${lectureNumber}:`, error);
