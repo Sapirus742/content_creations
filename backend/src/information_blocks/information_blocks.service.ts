@@ -30,7 +30,6 @@ export class Information_blocksService {
         name: string,
         description: string,
         tegs: string[],
-        link_to_folder: string, 
         test_numbers: number[],
         lecture_numbers: number[],
         lab_numbers: number[],
@@ -39,7 +38,6 @@ export class Information_blocksService {
         inform_blocks.name = name;
         inform_blocks.description = description;
         inform_blocks.tegs = tegs;
-        inform_blocks.link_to_folder = link_to_folder;
         inform_blocks.test_numbers = test_numbers;
         inform_blocks.lecture_numbers = lecture_numbers;
         inform_blocks.lab_numbers = lab_numbers;

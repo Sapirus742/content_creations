@@ -23,9 +23,6 @@ export class Information_blocks {
     @Column({type: 'varchar', array: true, default: '{}'})
     tegs: string[];
 
-    @Column()
-    link_to_folder: string; 
-
     @Column({type: 'varchar', array: true, default: '{}'})
     test_numbers: number[];
 
@@ -44,7 +41,6 @@ export class Information_blocks {
             name: this.name,
             description: this.description,
             tegs: this.tegs,
-            link_to_folder: this.link_to_folder,
             test_numbers: this.test_numbers,
             lecture_numbers: this.lecture_numbers,
             lab_numbers: this.lab_numbers,
