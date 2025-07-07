@@ -17,6 +17,18 @@ const routes: RouteRecordRaw[] = [
         props: route => ({ searchQuery: route.query.q })
       },
       {
+        path: 'test/:blockName/:testId',
+        name: 'TestPage',
+        component: () => import('pages/TestPage.vue'),
+        props: true // Передаёт параметры маршрута как props
+      },
+       {
+        path: 'edit/:blockName/:testId',
+        name: 'TestEditor',
+        component: () => import('pages/TestEditor.vue'),
+        props: true // Передаёт параметры маршрута как props
+      },
+      {
         path: 'create-course',
         name: 'CreateCourse',
         component: () => import('pages/CreateCourse.vue')

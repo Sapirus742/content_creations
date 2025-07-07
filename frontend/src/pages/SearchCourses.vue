@@ -94,12 +94,13 @@
                     <q-item-section>
                       <q-item-label>Лабораторная {{ labNum }}</q-item-label>
                     </q-item-section>
-                    <q-item-section side>
-                      <q-btn 
+                    <q-btn 
                         color="primary" 
                         label="Скачать" 
                         @click="downloadLab(block.link_to_folder, labNum)"
                       />
+                    <q-item-section side>
+                      
                       <q-btn 
                         class="q-ml-sm" 
                         color="secondary" 
@@ -125,12 +126,18 @@
                     <q-item-section>
                       <q-item-label>Тест {{ testNum }}</q-item-label>
                     </q-item-section>
+                    <q-btn 
+                        color="primary" 
+                        label="Изменить" 
+                        @click="editTest(block.id.toString()+'_'+block.name, testNum)"
+                      />
                     <q-item-section side>
                       <q-btn 
                         color="primary" 
                         label="Пройти" 
-                        @click="startTest(block.link_to_folder, testNum)"
+                        @click="startTest(block.id.toString()+'_'+block.name, testNum)"
                       />
+                      
                     </q-item-section>
                   </q-item>
                 </q-list>
@@ -442,27 +449,19 @@ const submitLab = () => {
 // Методы для работы с тестами
 const startTest = async (blockName: string, testNum: number) => {
   try {
-    const testData = await ContentHandler.getTestData(blockName, testNum);
-    
-    currentTest.value = {
-      title: `Тест ${testNum}`,
-      questions: testData.questions,
-      timeLimit: testData.time
-    };
-    
-    testAnswers.value = Array(currentTest.value.questions.length).fill(null);
-    testTimer.value = currentTest.value.timeLimit;
-    
-    // Запускаем таймер
-    if (testInterval.value) clearInterval(testInterval.value);
-    testInterval.value = setInterval(() => {
-      testTimer.value--;
-      if (testTimer.value <= 0) {
-        submitTest();
-      }
-    }, 1000);
-    
-    testDialog.value = true;
+    router.push(`/test/${blockName}/${testNum}`);
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка загрузки теста',
+      position: 'top'
+    });
+    console.error('Ошибка загрузки теста:', error);
+  }
+};
+const editTest = async (blockName: string, testNum: number) => {
+  try {
+    router.push(`/edit/${blockName}/${testNum}`);
   } catch (error) {
     $q.notify({
       type: 'negative',
