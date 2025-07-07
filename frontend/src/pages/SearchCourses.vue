@@ -94,18 +94,13 @@
                     <q-item-section>
                       <q-item-label>Лабораторная {{ labNum }}</q-item-label>
                     </q-item-section>
-                    <q-btn 
-                        color="primary" 
-                        label="Скачать" 
-                        @click="downloadLab(block.link_to_folder, labNum)"
-                      />
                     <q-item-section side>
                       
                       <q-btn 
                         class="q-ml-sm" 
                         color="secondary" 
-                        label="Ответить" 
-                        @click="openLabResponse(block.link_to_folder, labNum)"
+                        label="Открыть" 
+                        @click="openLabResponse(block.id+'_'+block.name, labNum)"
                       />
                     </q-item-section>
                   </q-item>
@@ -170,101 +165,56 @@
           </q-card>
       </q-dialog>
 
-      <!-- Диалог для лабораторной работы -->
       <q-dialog v-model="labDialog" persistent>
         <q-card style="width: 700px; max-width: 80vw;">
           <q-card-section>
             <div class="text-h6">Лабораторная работа: {{ currentLab.title }}</div>
+            
+            <!-- Состояние загрузки -->
+            <div v-if="loadingFiles" class="text-center q-pa-md">
+              <q-spinner size="md" color="primary" />
+              <div>Загрузка файлов...</div>
+            </div>
+            
+            <!-- Список файлов -->
+            <div v-else>
+              <div class="text-subtitle1 q-mb-sm">Файлы лабораторной:</div>
+              <q-list bordered separator v-if="labFiles.length">
+                <q-item 
+                  v-for="(file, index) in labFiles" 
+                  :key="index"
+                  clickable
+                  @click="downloadLabFile(file.path)"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="description" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ file.name }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-btn icon="download" flat round dense />
+                  </q-item-section>
+                </q-item>
+              </q-list>
+              
+              <div v-else class="text-grey text-center q-pa-md">
+                Нет доступных файлов
+              </div>
+            </div>
+            
+            <!-- Форма для загрузки ответа -->
+            <div class="q-mt-md">
+              <q-file
+                v-model="labAnswerFile"
+                label="Загрузить ответ"
+              />
+            </div>
           </q-card-section>
-          <q-card-section>
-            <q-btn 
-              color="primary" 
-              icon="download" 
-              label="Скачать задание" 
-              @click="downloadLab(currentLab.path, currentLab.number)"
-            />
-            <q-file
-              v-model="labAnswerFile"
-              label="Загрузить ответ"
-              class="q-mt-md"
-            />
-          </q-card-section>
+          
           <q-card-actions align="right">
             <q-btn flat label="Отправить" color="primary" @click="submitLab" />
             <q-btn flat label="Закрыть" color="primary" v-close-popup />
-          </q-card-actions>
-        </q-card>
-      </q-dialog>
-
-      <!-- Диалог для теста -->
-      <q-dialog v-model="testDialog" full-width persistent>
-        <q-card>
-          <q-card-section>
-            <div class="text-h6">Тест: {{ currentTest.title }}</div>
-            <div class="text-caption">
-              Осталось времени: {{ minutes }}:{{ seconds < 10 ? '0' + seconds : seconds }}
-            </div>
-          </q-card-section>
-
-          <q-card-section>
-            <div v-for="(question, qIndex) in currentTest.questions" :key="qIndex" class="q-mb-lg">
-              <div class="text-subtitle1 q-mb-sm">{{ qIndex + 1 }}. {{ question.name }}</div>
-              
-              <!-- Вопрос с одним вариантом ответа -->
-              <div v-if="question.type === 0">
-                <q-radio
-                  v-for="(choice, cIndex) in Object.entries(question.chooses || {})"
-                  :key="cIndex"
-                  v-model="testAnswers[qIndex]"
-                  :val="cIndex.toString()"
-                  :label="choice[1] as string"
-                  class="q-mb-xs"
-                />
-              </div>
-              
-              <!-- Вопрос с множественным выбором -->
-              <div v-if="question.type === 1">
-                <q-checkbox
-                  v-for="(choice, cIndex) in Object.entries(question.chooses || {})"
-                  :key="cIndex"
-                  v-model="testAnswers[qIndex]"
-                  :val="cIndex.toString()"
-                  :label="choice[1] as string"
-                  class="q-mb-xs"
-                />
-              </div>
-              
-              <!-- Вопрос с вводом текста -->
-              <div v-if="question.type === 2">
-                <q-input v-model="testAnswers[qIndex]" type="textarea" />
-              </div>
-              
-              <!-- Вопрос на соответствие -->
-              <div v-if="question.type === 3" class="row">
-                <div class="col-md-6 q-pr-md">
-                  <div v-for="(choice1, c1Index) in Object.entries(question.chooses1 || {})" :key="c1Index">
-                    {{ choice1[1] }}
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <template v-for="(choice1, c1Index) in Object.entries(question.chooses1 || {})" :key="c1Index">
-                    <q-select
-                      v-model="testAnswers[qIndex][c1Index]"
-                      :options="Object.entries(question.chooses2 || {}).map(([key, val]) => ({ 
-                        label: val as string, 
-                        value: key 
-                      }))"
-                      :label="`Соответствие для ${choice1[1] as string}`"
-                      class="q-mb-sm"
-                    />
-                  </template>
-                </div>
-              </div>
-            </div>
-          </q-card-section>
-
-          <q-card-actions align="right">
-            <q-btn flat label="Отправить" color="primary" @click="submitTest" />
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -273,7 +223,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted} from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { getAll } from '../api/courses.api';
@@ -289,6 +239,8 @@ const searchQuery = ref(route.query.q?.toString() || '');
 const loading = ref(false);
 const courses = ref<CoursesDto[]>([]);
 const lecturesCache = ref<Record<string, LectureInfo>>({});
+const labFiles = ref<{name: string, path: string}[]>([]);
+const loadingFiles = ref(false);
 
 interface LectureInfo {
   number: number;
@@ -312,22 +264,7 @@ const currentLab = ref({
 });
 const labAnswerFile = ref<File | null>(null);
 
-// Состояние для тестов
-const testDialog = ref(false);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const currentTest = ref<any>({
-  title: '',
-  questions: [],
-  timeLimit: 0
-});
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const testAnswers = ref<any[]>([]);
-const testTimer = ref(0);
-const testInterval = ref<NodeJS.Timeout | null>(null);
 
-// Вычисляемые свойства для таймера теста
-const minutes = computed(() => Math.floor(testTimer.value / 60));
-const seconds = computed(() => testTimer.value % 60);
 
 // Методы
 const goToMainPage = () => {
@@ -413,19 +350,65 @@ const openLecture = async (blockName: string, lectureNum: number) => {
 };
 
 // Метод для скачивания лабораторной работы
-const downloadLab = (blockName: string, labNum: number) => {
-  const labUrl = ContentHandler.getLabUrl(blockName, labNum);
-  window.open(labUrl, '_blank');
+const downloadLabFile = async (filePath: string) => {
+  try {
+    const response = await fetch(`http://localhost:3000/json-reader?path=${encodeURIComponent(filePath)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Получаем blob (бинарные данные файла)
+    const blob = await response.blob();
+    
+    // Создаем URL для скачивания
+    const downloadUrl = window.URL.createObjectURL(blob);
+    
+    // Создаем временную ссылку для скачивания
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    
+    // Извлекаем имя файла из пути
+    const fileName = filePath.split('/').pop() || 'download';
+    a.download = fileName;
+    
+    // Добавляем ссылку в DOM и кликаем
+    document.body.appendChild(a);
+    a.click();
+    
+    // Убираем ссылку после скачивания
+    window.URL.revokeObjectURL(downloadUrl);
+    a.remove();
+    
+    return true; // Успешное скачивание
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    return false; // Ошибка при скачивании
+  }
 };
 
 
-const openLabResponse = (blockPath: string, labNum: number) => {
-  currentLab.value = {
-    title: `Лабораторная работа ${labNum}`,
-    path: blockPath,
-    number: labNum
-  };
-  labDialog.value = true;
+const openLabResponse = async (blockPath: string, labNum: number) => {
+  try {
+    currentLab.value = {
+      title: `Лабораторная работа ${labNum}`,
+      path: blockPath,
+      number: labNum
+    };
+    
+    loadingFiles.value = true;
+    labFiles.value = await ContentHandler.getLabFiles(blockPath, labNum);
+    labDialog.value = true;
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка загрузки файлов лабораторной работы',
+      position: 'top'
+    });
+    console.error('Ошибка загрузки файлов:', error);
+  } finally {
+    loadingFiles.value = false;
+  }
 };
 
 const submitLab = () => {
@@ -470,39 +453,6 @@ const editTest = async (blockName: string, testNum: number) => {
     });
     console.error('Ошибка загрузки теста:', error);
   }
-};
-
-const submitTest = () => {
-  if (testInterval.value) clearInterval(testInterval.value);
-  
-  // Проверка ответов
-  let score = 0;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  currentTest.value.questions.forEach((question: any, index: number) => {
-    if (question.type === 0 || question.type === 1) {
-      // Для вопросов с выбором одного/нескольких вариантов
-      if (JSON.stringify(testAnswers.value[index]) === JSON.stringify(question.answer)) {
-        score += question.mark;
-      }
-    } else if (question.type === 3) {
-      // Для вопросов на соответствие
-      const userAnswer = testAnswers.value[index];
-      const correctAnswer = question.answer;
-      if (JSON.stringify(userAnswer) === JSON.stringify(correctAnswer)) {
-        score += question.mark;
-      }
-    }
-    // Для вопросов с текстовым ответом (type 2) нужна ручная проверка
-  });
-  
-  $q.notify({
-    type: 'positive',
-    message: `Тест завершен! Ваш результат: ${score} баллов`,
-    position: 'top',
-    timeout: 5000
-  });
-  
-  testDialog.value = false;
 };
 
 onMounted(async () => {

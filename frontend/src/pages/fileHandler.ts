@@ -103,18 +103,37 @@ static async getLectureInfo(blockName: string, lectureNumber: number): Promise<L
   }
 
   static getLabUrl(blockName: string, labNumber: number): string {
-    const blockData = this.contentData[blockName];
-    if (!blockData) return '';
+      const blockData = this.contentData[blockName];
+      if (!blockData) return '';
 
-    const lab = blockData.labs.find(l => l.number === labNumber);
-    if (!lab) return '';
+      const lab = blockData.labs.find(l => l.number === labNumber);
+      if (!lab) return '';
 
-    const labFile = lab.files.find(f => f.startsWith('lab_') && f.endsWith('.docx'));
-    if (!labFile) return '';
+      const labFile = lab.files.find(f => f.startsWith('lab_') && f.endsWith('.docx'));
+      if (!labFile) return '';
 
-    return this.generateUrl(blockName, `${labNumber}/${labFile}`);
+      return this.generateUrl(blockName, `${labNumber}/${labFile}`);
+    }
+  static async getLabFiles(blockName: string, labNum: number): Promise<{name: string, path: string}[]> {
+  try {
+    const relativePath = `${blockName}/${labNum}`;
+    const response = await fetch(`http://localhost:3000/listfiles/list?path=${encodeURIComponent(relativePath)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    return data.files.map((file: string) => ({
+      name: file,
+      path: `${relativePath}/${file}`
+    }));
+  } catch (error) {
+    console.error('Error fetching lab files:', error);
+    return [];
   }
-
+}
   static async getTestData(blockName: string, testNumber: number): Promise<any> {
     const blockData = this.contentData[blockName];
     if (!blockData) return null;

@@ -1,5 +1,6 @@
 <template>
   <div class="q-pa-md">
+    <q-btn flat color="primary" icon="arrow_back" label="Назад" @click="goBack" class="q-mb-md"/>
     <div class="text-h4 q-mb-md">Редактор теста</div>
     
     <div class="row q-mb-md">
@@ -286,7 +287,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute , useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 
 interface Test {
@@ -309,7 +310,7 @@ interface Question {
 
 const $q = useQuasar();
 const route = useRoute();
-
+const router = useRouter();
 const test = ref<Test>({
   count: 0,
   time: 60
@@ -353,6 +354,8 @@ const rightChoiceImageFiles = ref<Record<string, File | null>>({});
 const choiceIsImage = ref<Record<string, boolean>>({});
 const leftChoiceIsImage = ref<Record<string, boolean>>({});
 const rightChoiceIsImage = ref<Record<string, boolean>>({});
+
+const goBack = () => router.go(-1);
 
 const getQuestionTypeName = (type: number) => {
   const typeObj = questionTypes.find(t => t.value === type);
@@ -412,6 +415,7 @@ const uploadFile = async (file: File): Promise<string | null> => {
     if (!response.ok) throw new Error('Upload failed');
     
     const result = await response.json();
+    loadImage(result.files[0].originalname);
     return `image:${result.files[0].originalname}`; // Возвращаем оригинальное имя
   } catch (error) {
     console.error('Upload error:', error);
