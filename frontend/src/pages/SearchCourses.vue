@@ -63,7 +63,7 @@
                     <q-item 
                       v-if="item.type === 'lecture'"
                       clickable
-                      @click="openLecture(item.blockName, item.number, `${item.blockId}_${item.blockName}`)"
+                      @click="openLecture(item.blockName, item.number, `${item.blockId}_${item.blockName}`,block.lecture_numbers.indexOf(item.number))"
                     >
                       <q-item-section avatar>
                         <q-icon name="menu_book" color="red" />
@@ -333,7 +333,7 @@ const preloadLecturesInfo = async () => {
     for (const course of courses.value) {
       for (const block of course.information_blocks) {
         for (const num of block.lecture_numbers) {
-          const lecture = await ContentHandler.getLectureInfo(block.name, num,`${block.id}_${block.name}`);
+          const lecture = await ContentHandler.getLectureInfo(block.name, num,`${block.id}_${block.name}`,block.lecture_numbers.indexOf(num));
           if (lecture) {
             lecturesCache.value[`${block.name}_${num}`] = lecture;
           }
@@ -352,7 +352,7 @@ const preloadLecturesInfo = async () => {
 };
 
 // Методы для работы с лекциями
-const openLecture = async (blockName: string, lectureNum: number,lPath:string) => {
+const openLecture = async (blockName: string, lectureNum: number,lPath:string, idLecture: number) => {
   try {
     const cacheKey = `${blockName}_${lectureNum}`;
 
@@ -360,7 +360,7 @@ const openLecture = async (blockName: string, lectureNum: number,lPath:string) =
     
     // Если лекции нет в кеше, пробуем загрузить
     if (!lecturesCache.value[cacheKey]) {
-      const lecture = await ContentHandler.getLectureInfo(blockName, lectureNum,lPath);
+      const lecture = await ContentHandler.getLectureInfo(blockName, lectureNum,lPath,idLecture);
       if (!lecture) {
         throw new Error('Лекция не найдена');
       }
