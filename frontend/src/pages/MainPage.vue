@@ -10,7 +10,7 @@
       <!-- Основной поисковый блок -->
       <q-card class="q-pa-lg">
         <q-card-section class="text-center">
-          <div class="text-h5 q-mb-md">Найти курс</div>
+          <div class="text-h5 q-mb-md">Создать курс</div>
           
           <q-input
             v-model="searchQuery"
@@ -33,6 +33,7 @@
               icon="search"
               @click="handleSearch"
             />
+            <q-item-label class="text-h4">Или</q-item-label>
             <q-btn
               color="secondary"
               label="Создать новый"

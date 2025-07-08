@@ -21,6 +21,14 @@ export interface LectureInfo {
   url: string;
 }
 
+export interface ContentItem {
+  type: 'lecture' | 'lab' | 'test';
+  number: number;
+  name?: string;
+  file?: string;
+  files?: string[];
+}
+
 export class ContentHandler {
   private static basePath = '/content/Пул инфоблоков';
   public static contentData: Record<string, BlockContent> = {};
@@ -114,25 +122,39 @@ static async getLectureInfo(blockName: string, lectureNumber: number): Promise<L
 
     return this.generateUrl(blockName, `${labNumber}/${labFile}`);
   }
+static getOrderedContent(blockName: string): ContentItem[] | null {
+    if (!this.contentData[blockName]) return null;
 
-  static async getTestData(blockName: string, testNumber: number): Promise<any> {
-    const blockData = this.contentData[blockName];
-    if (!blockData) return null;
+    const result: ContentItem[] = [];
 
-    const test = blockData.labs.find(l => l.number === testNumber);
-    if (!test) return null;
+    // Добавляем лекции
+    this.contentData[blockName].lectures.forEach(lecture => {
+      result.push({
+        type: 'lecture',
+        number: lecture.number,
+        name: lecture.name,
+        file: lecture.file
+      });
+    });
 
-    const testFile = test.files.find(f => f === 'test.json');
-    if (!testFile) return null;
+    // Добавляем лабораторные работы
+    this.contentData[blockName].labs.forEach(lab => {
+      // Определяем тип по имени файла
+      const isTest = lab.files.some(f => f.includes('test'));
+      result.push({
+        type: isTest ? 'test' : 'lab',
+        number: lab.number,
+        files: lab.files
+      });
+    });
 
-    const url = this.generateUrl(blockName, `${testNumber}/${testFile}`);
-    try {
-      const response = await fetch(url);
-      return await response.json();
-    } catch (error) {
-      console.error('Error loading test:', error);
-      return null;
-    }
+    // Сортируем по номеру
+    return result.sort((a, b) => a.number - b.number);
+  }
+
+  // Метод для проверки, является ли лабораторная работа тестом
+  private static isTestLab(lab: LabItem): boolean {
+    return lab.files.some(f => f.includes('test'));
   }
 }
 

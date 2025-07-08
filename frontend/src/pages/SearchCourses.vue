@@ -45,7 +45,9 @@
         >
           <q-item-section>
             <q-item-label class="text-h6">{{ course.name }}</q-item-label>
-            <q-item-label caption>{{ course.description }}</q-item-label>
+            <q-item-label caption class="full-width-description">
+              {{ course.description }}
+            </q-item-label>
             
             <!-- Аккордеон для блоков курса -->
             <q-expansion-item
@@ -54,94 +56,86 @@
               :label="`Блок ${blockIndex + 1}: ${block.name}`"
               class="q-mt-md"
             >
-              <!-- Лекции -->
-              <div v-if="block.lecture_numbers.length > 0" class="q-mb-md">
-                <div class="text-subtitle1 q-mb-sm">Лекции</div>
-                <q-list bordered dense>
-                  <q-item 
-                    v-for="lectureNum in block.lecture_numbers" 
-                    :key="lectureNum"
-                    clickable
-                    @click="openLecture(block.name, lectureNum)"
-                  >
-                    <q-item-section avatar>
-                      <q-icon name="menu_book" color="red" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>Лекция {{ lectureNum }}</q-item-label>
-                      <q-item-label caption v-if="lecturesCache[`${block.name}_${lectureNum}`]?.name">
-                        {{ lecturesCache[`${block.name}_${lectureNum}`].name }}
-                      </q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      <q-btn flat round icon="play_circle" color="primary" />
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </div>
+              <!-- Вместо раздельных списков используем единый orderedContent -->
+              <template v-if="orderedContent[block.name]">
+                <div v-for="item in orderedContent[block.name]" :key="item.number">
+                  <!-- Лекция -->
+                  <div v-if="item.type === 'lecture'" class="q-mb-md">
+                    <div class="text-subtitle1 q-mb-sm"></div>
+                    <q-list bordered dense>
+                      <q-item clickable @click="openLecture(block.name, item.number)">
+                        <q-item-section avatar>
+                          <q-icon name="menu_book" color="red" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{ item.name }}</q-item-label>
+                          <q-item-label caption v-if="item.name">
+                            {{ item.number }}. Лекция 
+                          </q-item-label>
+                        </q-item-section>
+                        <q-item-section side>
+                          <q-btn flat round icon="play_circle" color="primary" />
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </div>
 
-              <!-- Лабораторные работы -->
-              <div v-if="block.lab_numbers.length > 0" class="q-mb-md">
-                <div class="text-subtitle1 q-mb-sm">Лабораторные работы</div>
-                <q-list bordered dense>
-                  <q-item 
-                    v-for="(labNum, index) in block.lab_numbers" 
-                    :key="index"
-                  >
-                    <q-item-section avatar>
-                      <q-icon name="science" color="blue" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>Лабораторная {{ labNum }}</q-item-label>
-                    </q-item-section>
-                    <q-btn 
-                        color="primary" 
-                        label="Скачать" 
-                        @click="downloadLab(block.link_to_folder, labNum)"
-                      />
-                    <q-item-section side>
-                      
-                      <q-btn 
-                        class="q-ml-sm" 
-                        color="secondary" 
-                        label="Ответить" 
-                        @click="openLabResponse(block.link_to_folder, labNum)"
-                      />
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </div>
+                  <!-- Лабораторная работа -->
+                  <div v-else-if="item.type === 'lab'" class="q-mb-md">
+                    <div class="text-subtitle1 q-mb-sm"></div>
+                    <q-list bordered dense>
+                      <q-item>
+                        <q-item-section avatar>
+                          <q-icon name="science" color="blue" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{ item.number }}. Лабораторная работа </q-item-label>
+                        </q-item-section>
+                        <q-btn 
+                          color="primary" 
+                          label="Скачать" 
+                          @click="downloadLab(block.link_to_folder, item.number)"
+                        />
+                        <q-item-section side>
+                          <q-btn 
+                            class="q-ml-sm" 
+                            color="secondary" 
+                            label="Ответить" 
+                            @click="openLabResponse(block.link_to_folder, item.number)"
+                          />
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </div>
 
-              <!-- Тесты -->
-              <div v-if="block.test_numbers.length > 0" class="q-mb-md">
-                <div class="text-subtitle1 q-mb-sm">Тесты</div>
-                <q-list bordered dense>
-                  <q-item 
-                    v-for="(testNum, index) in block.test_numbers" 
-                    :key="index"
-                  >
-                    <q-item-section avatar>
-                      <q-icon name="assignment" color="green" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>Тест {{ testNum }}</q-item-label>
-                    </q-item-section>
-                    <q-btn 
-                        color="primary" 
-                        label="Изменить" 
-                        @click="editTest(block.id.toString()+'_'+block.name, testNum)"
-                      />
-                    <q-item-section side>
-                      <q-btn 
-                        color="primary" 
-                        label="Пройти" 
-                        @click="startTest(block.id.toString()+'_'+block.name, testNum)"
-                      />
-                      
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </div>
+                  <!-- Тест -->
+                  <div v-else-if="item.type === 'test'" class="q-mb-md">
+                    <div class="text-subtitle1 q-mb-sm"></div>
+                    <q-list bordered dense>
+                      <q-item>
+                        <q-item-section avatar>
+                          <q-icon name="assignment" color="green" />
+                        </q-item-section>
+                        <q-item-section>
+                          <q-item-label>{{ item.number }}. Тест </q-item-label>
+                        </q-item-section>
+                        <q-btn 
+                          color="primary" 
+                          label="Изменить" 
+                          @click="editTest(block.id.toString()+'_'+block.name, item.number)"
+                        />
+                        <q-item-section side>
+                          <q-btn 
+                            color="primary" 
+                            label="Пройти" 
+                            @click="startTest(block.id.toString()+'_'+block.name, item.number)"
+                          />
+                        </q-item-section>
+                      </q-item>
+                    </q-list>
+                  </div>
+                </div>
+              </template>
             </q-expansion-item>
           </q-item-section>
         </q-item>
@@ -163,7 +157,7 @@
             <q-card-section >
               <video 
                 controls 
-                style="width: 100%; max-height: 70vh; object-fit: contain;"
+                style="width: 100%; max-height: 70vh; object-fit: cover;"
                 :src="currentLecture.url"
               ></video>
             </q-card-section>
@@ -285,6 +279,8 @@ const route = useRoute();
 const router = useRouter();
 
 // Состояние компонента
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const orderedContent = ref<Record<string, any[]>>({});
 const searchQuery = ref(route.query.q?.toString() || '');
 const loading = ref(false);
 const courses = ref<CoursesDto[]>([]);
@@ -334,6 +330,13 @@ const goToMainPage = () => {
   router.push({ name: 'MainPage' });
 };
 
+const loadOrderedContent = async (blockName: string) => {
+  const content = ContentHandler.getOrderedContent(blockName);
+  if (content) {
+    orderedContent.value[blockName] = content;
+  }
+};
+
 const performSearch = async () => {
   loading.value = true;
   try {
@@ -343,35 +346,17 @@ const performSearch = async () => {
       course.description.toLowerCase().includes(searchQuery.value.toLowerCase())
     );
     
-    // Предзагрузка информации о лекциях
-    await preloadLecturesInfo();
+    // Загружаем упорядоченный контент для каждого блока
+    courses.value.forEach(course => {
+      course.information_blocks.forEach(block => {
+        loadOrderedContent(block.name);
+      });
+    });
+    
   } catch (error) {
     console.error('Ошибка при загрузке курсов:', error);
   } finally {
     loading.value = false;
-  }
-};
-
-const preloadLecturesInfo = async () => {
-  try {
-    for (const course of courses.value) {
-      for (const block of course.information_blocks) {
-        for (const num of block.lecture_numbers) {
-          const lecture = await ContentHandler.getLectureInfo(block.name, num);
-          if (lecture) {
-            lecturesCache.value[`${block.name}_${num}`] = lecture;
-          }
-        }
-      }
-    }
-  } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка загрузки информации о лекциях',
-      position: 'top'
-    });
-    console.error('Ошибка предзагрузки лекций:', error);
-  } finally {
   }
 };
 
@@ -516,6 +501,33 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.full-width-description {
+  white-space: normal;
+  color: #333333;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  display: -webkit-box;
+  word-break: break-word;
+}
+
+.full-width-description.expanded {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  display: block;
+}
+
+/* Отключаем стандартные ограничения Quasar */
+.q-item__label--caption {
+  max-width: none !important;
+  white-space: normal !important;
+}
+
 .video-wrapper {
   position: relative;
   padding-bottom: 56.25%; /* 16:9 соотношение сторон */
