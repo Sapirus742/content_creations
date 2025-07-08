@@ -21,14 +21,6 @@ export interface LectureInfo {
   url: string;
 }
 
-export interface ContentItem {
-  type: 'lecture' | 'lab' | 'test';
-  number: number;
-  name?: string;
-  file?: string;
-  files?: string[];
-}
-
 export class ContentHandler {
   private static basePath = '/content/Пул инфоблоков';
   public static contentData: Record<string, BlockContent> = {};
@@ -124,43 +116,46 @@ static async getLectureInfo(blockName: string, lectureNumber: number,lPath:strin
       const labFile = lab.files.find(f => f.startsWith('lab_') && f.endsWith('.docx'));
       if (!labFile) return '';
 
-    return this.generateUrl(blockName, `${labNumber}/${labFile}`);
+      return this.generateUrl(blockName, `${labNumber}/${labFile}`);
+    }
+  static async getLabFiles(blockName: string, labNum: number): Promise<{name: string, path: string}[]> {
+  try {
+    const relativePath = `${blockName}/${labNum}`;
+    const response = await fetch(`${process.env.API_ENDPOINT}/listfiles/list?path=${encodeURIComponent(relativePath)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    return data.files.map((file: string) => ({
+      name: file,
+      path: `${relativePath}/${file}`
+    }));
+  } catch (error) {
+    console.error('Error fetching lab files:', error);
+    return [];
   }
-
+}
   static async getTestData(blockName: string, testNumber: number): Promise<any> {
     const blockData = this.contentData[blockName];
     if (!blockData) return null;
 
-    const result: ContentItem[] = [];
+    const test = blockData.labs.find(l => l.number === testNumber);
+    if (!test) return null;
 
-    // Добавляем лекции
-    this.contentData[blockName].lectures.forEach(lecture => {
-      result.push({
-        type: 'lecture',
-        number: lecture.number,
-        name: lecture.name,
-        file: lecture.file
-      });
-    });
+    const testFile = test.files.find(f => f === 'test.json');
+    if (!testFile) return null;
 
-    // Добавляем лабораторные работы
-    this.contentData[blockName].labs.forEach(lab => {
-      // Определяем тип по имени файла
-      const isTest = lab.files.some(f => f.includes('test'));
-      result.push({
-        type: isTest ? 'test' : 'lab',
-        number: lab.number,
-        files: lab.files
-      });
-    });
-
-    // Сортируем по номеру
-    return result.sort((a, b) => a.number - b.number);
-  }
-
-  // Метод для проверки, является ли лабораторная работа тестом
-  private static isTestLab(lab: LabItem): boolean {
-    return lab.files.some(f => f.includes('test'));
+    const url = this.generateUrl(blockName, `${testNumber}/${testFile}`);
+    try {
+      const response = await fetch(url);
+      return await response.json();
+    } catch (error) {
+      console.error('Error loading test:', error);
+      return null;
+    }
   }
 }
 
