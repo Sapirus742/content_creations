@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-parsing-error -->
 <template>
   <div class="q-pa-md">
     <q-btn
@@ -55,87 +56,70 @@
               :label="`Блок ${blockIndex + 1}: ${block.name}`"
               class="q-mt-md"
             >
-              <!-- Лекции -->
-              <div v-if="block.lecture_numbers.length > 0" class="q-mb-md">
-                <div class="text-subtitle1 q-mb-sm">Лекции</div>
+              <div class="q-mb-md">
                 <q-list bordered dense>
-                  <q-item 
-                    v-for="lectureNum in block.lecture_numbers" 
-                    :key="lectureNum"
-                    clickable
-                    @click="openLecture(block.name, lectureNum,`${block.id}_${block.name}`)"
-                  >
-                    <q-item-section avatar>
-                      <q-icon name="menu_book" color="red" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>Лекция {{ lectureNum }}</q-item-label>
-                      <q-item-label caption v-if="lecturesCache[`${block.name}_${lectureNum}`]?.name">
-                        {{ lecturesCache[`${block.name}_${lectureNum}`].name }}
-                      </q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      <q-btn flat round icon="play_circle" color="primary" />
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </div>
+                  <template v-for="item in getSortedBlockItems(block)" :key="`${item.type}_${item.number}`">
+                    <!-- Лекция -->
+                    <q-item 
+                      v-if="item.type === 'lecture'"
+                      clickable
+                      @click="openLecture(item.blockName, item.number, `${item.blockId}_${item.blockName}`)"
+                    >
+                      <q-item-section avatar>
+                        <q-icon name="menu_book" color="red" />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label>{{ item.number }}. Лекция: {{ lecturesCache[`${item.blockName}_${item.number}`].name }}</q-item-label>
+                      </q-item-section>
+                      <q-item-section side>
+                        <q-btn flat round icon="play_circle" color="primary" />
+                      </q-item-section>
+                    </q-item>
 
-              <!-- Лабораторные работы -->
-              <div v-if="block.lab_numbers.length > 0" class="q-mb-md">
-                <div class="text-subtitle1 q-mb-sm">Лабораторные работы</div>
-                <q-list bordered dense>
-                  <q-item 
-                    v-for="(labNum, index) in block.lab_numbers" 
-                    :key="index"
-                  >
-                    <q-item-section avatar>
-                      <q-icon name="science" color="blue" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>Лабораторная {{ labNum }}</q-item-label>
-                    </q-item-section>
-                    <q-item-section side>
-                      
+                    <!-- Лабораторная -->
+                    <q-item 
+                      v-else-if="item.type === 'lab'"
+                    >
+                      <q-item-section avatar>
+                        <q-icon name="science" color="blue" />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label>{{ item.number }}. Лабораторная </q-item-label>
+                      </q-item-section>
+                      <q-item-section side>
+                        <q-btn 
+                          class="q-ml-sm" 
+                          color="secondary" 
+                          label="Открыть" 
+                          @click="openLabResponse(`${item.blockId}_${item.blockName}`, item.number)"
+                        />
+                      </q-item-section>
+                    </q-item>
+
+                    <!-- Тест -->
+                    <q-item 
+                      v-else-if="item.type === 'test'"
+                    >
+                      <q-item-section avatar>
+                        <q-icon name="assignment" color="green" />
+                      </q-item-section>
+                      <q-item-section>
+                        <q-item-label>{{ item.number }}. Тест </q-item-label>
+                      </q-item-section>
                       <q-btn 
-                        class="q-ml-sm" 
-                        color="secondary" 
-                        label="Открыть" 
-                        @click="openLabResponse(block.id+'_'+block.name, labNum)"
-                      />
-                    </q-item-section>
-                  </q-item>
-                </q-list>
-              </div>
-
-              <!-- Тесты -->
-              <div v-if="block.test_numbers.length > 0" class="q-mb-md">
-                <div class="text-subtitle1 q-mb-sm">Тесты</div>
-                <q-list bordered dense>
-                  <q-item 
-                    v-for="(testNum, index) in block.test_numbers" 
-                    :key="index"
-                  >
-                    <q-item-section avatar>
-                      <q-icon name="assignment" color="green" />
-                    </q-item-section>
-                    <q-item-section>
-                      <q-item-label>Тест {{ testNum }}</q-item-label>
-                    </q-item-section>
-                    <q-btn 
                         color="primary" 
                         label="Изменить" 
-                        @click="editTest(block.id.toString()+'_'+block.name, testNum)"
+                        @click="editTest(`${item.blockId}_${item.blockName}`, item.number)"
                       />
-                    <q-item-section side>
-                      <q-btn 
-                        color="primary" 
-                        label="Пройти" 
-                        @click="startTest(block.id.toString()+'_'+block.name, testNum)"
-                      />
-                      
-                    </q-item-section>
-                  </q-item>
+                      <q-item-section side>
+                        <q-btn 
+                          color="primary" 
+                          label="Пройти" 
+                          @click="startTest(`${item.blockId}_${item.blockName}`, item.number)"
+                        />
+                      </q-item-section>
+                    </q-item>
+                  </template>
                 </q-list>
               </div>
             </q-expansion-item>
@@ -265,7 +249,55 @@ const currentLab = ref({
 });
 const labAnswerFile = ref<File | null>(null);
 
-
+interface BlockItem {
+  type: 'lecture' | 'lab' | 'test';
+  number: number;
+  blockName: string;
+  blockId: string | number;
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getSortedBlockItems = (block: { 
+  lecture_numbers: number[];
+  lab_numbers: number[];
+  test_numbers: number[];
+  name: string;
+  id: string | number;
+}): BlockItem[] => {
+  const items: BlockItem[] = [];
+  
+  // Добавляем лекции
+  block.lecture_numbers.forEach((num: number) => {
+    items.push({
+      type: 'lecture',
+      number: num,
+      blockName: block.name,
+      blockId: block.id
+    });
+  });
+  
+  // Добавляем лабораторные
+  block.lab_numbers.forEach((num: number) => {
+    items.push({
+      type: 'lab',
+      number: num,
+      blockName: block.name,
+      blockId: block.id
+    });
+  });
+  
+  // Добавляем тесты
+  block.test_numbers.forEach((num: number) => {
+    items.push({
+      type: 'test',
+      number: num,
+      blockName: block.name,
+      blockId: block.id
+    });
+  });
+  
+  // Сортируем ТОЛЬКО по номеру (не учитывая тип)
+  return items.sort((a, b) => a.number - b.number);
+};
 
 // Методы
 const goToMainPage = () => {
@@ -514,11 +546,13 @@ onMounted(async () => {
 }
 
 .q-item__label--caption {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  max-width: none;
   display: block;
+  margin-top: 8px;
+  color: rgba(0, 0, 0, 0.7);
 }
 
 @media (max-width: 800px) {
