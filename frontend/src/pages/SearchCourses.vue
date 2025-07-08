@@ -10,22 +10,23 @@
     />
     
     <div class="row items-center q-mb-md">
-      <q-input
+        <q-input
         v-model="searchQuery"
         outlined
         placeholder="Продолжите поиск курсов..."
         class="col-grow"
-        @keyup.enter="performSearch"
+        @keyup.enter="ReSearch"
+        clearable  
       >
         <template v-slot:append>
-          <q-icon name="search" />
+          <q-icon name="search" @click="ReSearch" />  <!-- Поиск при клике на иконку -->
         </template>
       </q-input>
       <q-btn
         color="primary"
         icon="search"
         label="Поиск"
-        @click="performSearch"
+        @click="ReSearch"
         class="q-ml-sm"
       />
     </div>
@@ -270,7 +271,13 @@ const labAnswerFile = ref<File | null>(null);
 const goToMainPage = () => {
   router.push({ name: 'MainPage' });
 };
-
+const ReSearch = () => {
+ if (searchQuery.value.trim()) {
+  console.log(searchQuery.value);
+    router.push({ name: 'SearchCourses', query: { q: searchQuery.value } });
+    performSearch();
+  }
+};
 const performSearch = async () => {
   loading.value = true;
   try {
