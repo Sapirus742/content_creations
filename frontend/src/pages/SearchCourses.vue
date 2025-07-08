@@ -84,7 +84,7 @@
                         <q-icon name="science" color="blue" />
                       </q-item-section>
                       <q-item-section>
-                        <q-item-label>{{ item.number }}. Лабораторная {{ block.lab_numbers.indexOf(item.number)+1}} </q-item-label>
+                        <q-item-label>{{ item.number }}. Лабораторная работа №{{ block.lab_numbers.indexOf(item.number)+1}} </q-item-label>
                       </q-item-section>
                       <q-item-section side>
                         <q-btn 
