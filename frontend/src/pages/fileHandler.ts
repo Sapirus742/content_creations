@@ -36,7 +36,7 @@ static async getLectureInfo(blockName: string, lectureNumber: number,lPath:strin
 
     return {
       number: lectureNumber,
-      name:  foundFile.slice(foundFile.lastIndexOf('_') + 1).replace(/\.mp4$/, '')||`Лекция ${idLecture}`,
+      name:  foundFile.slice(foundFile.lastIndexOf('_') + 1).replace(/\.mp4$/, '')||`Лекция ${idLecture+1}`,
       url: lectureUrl+`${encodeURIComponent(lPath+'/'+foundFile)}`
     };
   } catch (error) {

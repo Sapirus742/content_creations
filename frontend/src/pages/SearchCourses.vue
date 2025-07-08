@@ -84,14 +84,14 @@
                         <q-icon name="science" color="blue" />
                       </q-item-section>
                       <q-item-section>
-                        <q-item-label>{{ item.number }}. Лабораторная </q-item-label>
+                        <q-item-label>{{ item.number }}. Лабораторная {{ block.lab_numbers.indexOf(item.number)+1}} </q-item-label>
                       </q-item-section>
                       <q-item-section side>
                         <q-btn 
                           class="q-ml-sm" 
                           color="secondary" 
                           label="Открыть" 
-                          @click="openLabResponse(`${item.blockId}_${item.blockName}`, item.number)"
+                          @click="openLabResponse(`${item.blockId}_${item.blockName}`,item.number, block.lab_numbers.indexOf(item.number)+1)"
                         />
                       </q-item-section>
                     </q-item>
@@ -153,7 +153,7 @@
       <q-dialog v-model="labDialog" persistent>
         <q-card style="width: 700px; max-width: 80vw;">
           <q-card-section>
-            <div class="text-h6">Лабораторная работа: {{ currentLab.title }}</div>
+            <div class="text-h6"> {{ currentLab.title }}</div>
             
             <!-- Состояние загрузки -->
             <div v-if="loadingFiles" class="text-center q-pa-md">
@@ -427,16 +427,23 @@ const downloadLabFile = async (filePath: string) => {
 };
 
 
-const openLabResponse = async (blockPath: string, labNum: number) => {
+const openLabResponse = async (blockPath: string, labNum: number, idLab:number) => {
   try {
+    let cleanName ='';
+    loadingFiles.value = true;
+    labFiles.value = await ContentHandler.getLabFiles(blockPath, labNum);
+    const filesread =labFiles.value;
+    for (const fileName of filesread) {
+    if (fileName.name.startsWith('lab_')) {
+      cleanName = fileName.name.replace(/^lab_/, '').replace(/\.[^/.]+$/, '');
+      console.log(cleanName);
+    }
+}
     currentLab.value = {
-      title: `Лабораторная работа ${labNum}`,
+      title: `Лабораторная работа ${idLab}:`+cleanName,
       path: blockPath,
       number: labNum
     };
-    
-    loadingFiles.value = true;
-    labFiles.value = await ContentHandler.getLabFiles(blockPath, labNum);
     labDialog.value = true;
   } catch (error) {
     $q.notify({
