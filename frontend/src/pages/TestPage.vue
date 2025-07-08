@@ -11,59 +11,67 @@
       <div class="text-caption q-mb-lg">Осталось времени: {{ formattedTime }}</div>
 
       <template v-for="(question, index) in selectedQuestions" :key="`question-${index}`">
+        <!-- Обертка для вопроса с рамкой -->
+      <div class="question-container q-mb-lg">
+        <div class="question-number">Вопрос {{ index + 1 }}</div>
         <!-- Тип 0: Один выбор -->
         <div v-if="question.type === 0" class="q-mb-xl">
           <div class="text-h6 q-mb-sm">{{ question.name }}</div>
-          <!-- Изображение вопроса -->
           <img 
             v-if="questionImages[index]" 
             :src="questionImages[index]" 
-            class="q-mb-md"
-            style="max-width: 100%; max-height: 300px;"
+            class="q-mb-sm"
+            style="max-width: 100%; max-height: 200px;"
             @error="handleImageError(index, 'question')"
           />
-          <q-radio
-            v-for="(option, key) in question.chooses || {}"
-            :key="key"
-            :val="key"
-            v-model="userAnswers[index]"
-            :label="optionImages[index]?.[key] ? '' : option"
-              class="q-mb-xs"
-            >
-              <img 
-                v-if="optionImages[index]?.[key]"
-                :src="optionImages[index][key]" 
-                style="max-width: 100%; max-height: 100px;"
-              />
-              
-        </q-radio>
-        </div>
-
-        <!-- Тип 1: Множественный выбор -->
-        <div v-else-if="question.type === 1" class="q-mb-xl">
-          <div class="text-h6 q-mb-sm">{{ question.name }}</div>
-          <!-- Изображение вопроса -->
-          <img 
-            v-if="questionImages[index]" 
-            :src="questionImages[index]" 
-            class="q-mb-md"
-            style="max-width: 100%; max-height: 300px;"
-            @error="handleImageError(index, 'question')"
-          />
-          <q-checkbox
+          <div class="compact-options">
+            <q-radio
               v-for="(option, key) in question.chooses || {}"
               :key="key"
               :val="key"
               v-model="userAnswers[index]"
               :label="optionImages[index]?.[key] ? '' : option"
-              class="q-mb-xs"
             >
-              <img 
-                v-if="optionImages[index]?.[key]"
-                :src="optionImages[index][key]" 
-                style="max-width: 100%; max-height: 100px;"
-              />
+              <template v-if="optionImages[index]?.[key]">
+                <div class="option-image-container">
+                  <img 
+                    :src="optionImages[index][key]" 
+                    class="option-image"
+                  />
+                </div>
+              </template>
+            </q-radio>
+          </div>
+        </div>
+
+        <!-- Тип 1: Множественный выбор -->
+        <div v-else-if="question.type === 1" class="q-mb-xl">
+          <div class="text-h6 q-mb-sm">{{ question.name }}</div>
+          <img 
+            v-if="questionImages[index]" 
+            :src="questionImages[index]" 
+            class="q-mb-sm"
+            style="max-width: 100%; max-height: 200px;"
+            @error="handleImageError(index, 'question')"
+          />
+          <div class="compact-options">
+            <q-checkbox
+              v-for="(option, key) in question.chooses || {}"
+              :key="key"
+              :val="key"
+              v-model="userAnswers[index]"
+              :label="optionImages[index]?.[key] ? '' : option"
+            >
+              <template v-if="optionImages[index]?.[key]">
+                <div class="option-image-container">
+                  <img 
+                    :src="optionImages[index][key]" 
+                    class="option-image"
+                  />
+                </div>
+              </template>
             </q-checkbox>
+          </div>
         </div>
 
         <!-- Тип 2: Текстовый ответ -->
@@ -79,87 +87,95 @@
           />
           <q-input v-model="userTextAnswers[index]" outlined placeholder="Введите ответ"/>
         </div>
-
         <!-- Тип 3: Сопоставление (drag-and-drop) -->
-        <div v-else-if="question.type === 3" class="q-mb-xl">
-          <div class="text-h6 q-mb-sm">{{ question.name }}</div>
-          <!-- Изображение вопроса -->
-          <img 
-            v-if="questionImages[index]" 
-            :src="questionImages[index]" 
-            class="q-mb-md"
-            style="max-width: 100%; max-height: 300px;"
-            @error="handleImageError(index, 'question')"
-          />
-          <div class="row q-gutter-md">
-            <!-- Левый столбец (перетаскиваемые элементы) -->
-            <div class="col-5">
-              <div 
-                v-for="(leftItem, leftKey) in question.chooses1 || {}" 
-                :key="`left-${leftKey}`"
-                class="drag-source q-pa-sm bg-blue-1 rounded-borders q-mb-sm"
-                draggable="true"
-                @dragstart="startDrag($event, leftKey)"
-                @dragend="clearDropZone"
-                :class="{'bg-grey-4': isLeftItemPaired(index, leftKey)}"
-              >
-                <template v-if="!isLeftItemPaired(index, leftKey)">
-                  <div v-if="leftItemImages[index]?.[leftKey]">
-                    <img 
-                      :src="leftItemImages[index][leftKey]" 
-                      style="max-width: 100%; max-height: 100px;"
-                      @error="handleImageError(index, 'left', leftKey)"
-                    />
-                  </div>
-                  <div v-else>{{ leftItem }}</div>
-                </template>
-                <template v-else>
-                  <q-icon name="done" color="green"/>
-                </template>
+          <div v-else-if="question.type === 3" class="q-mb-xl">
+            <div class="text-h6 q-mb-sm">{{ question.name }}</div>
+            <img 
+              v-if="questionImages[index]" 
+              :src="questionImages[index]" 
+              class="q-mb-sm question-image"
+              @error="handleImageError(index, 'question')"
+            />
+            <div class="row q-gutter-md matching-container">
+              <!-- Левый столбец -->
+              <div class="col matching-column">
+                <div 
+                  v-for="(leftItem, leftKey) in question.chooses1 || {}" 
+                  :key="`left-${leftKey}`"
+                  class="drag-source q-pa-xs rounded-borders q-mb-xs"
+                  :class="{
+                    'has-image': leftItemImages[index]?.[leftKey],
+                    'bg-grey-4': isLeftItemPaired(index, leftKey)
+                  }"
+                  draggable="true"
+                  @dragstart="startDrag($event, leftKey)"
+                  @dragend="clearDropZone"
+                >
+                  <!-- Содержимое левого элемента -->
+                  <template v-if="!isLeftItemPaired(index, leftKey)">
+                    <div v-if="leftItemImages[index]?.[leftKey]" class="matching-image-container">
+                      <img 
+                        :src="leftItemImages[index][leftKey]" 
+                        class="matching-image"
+                        @error="handleImageError(index, 'left', leftKey)"
+                      />
+                    </div>
+                    <div v-else class="matching-text">{{ leftItem }}</div>
+                  </template>
+                  <template v-else>
+                    <q-icon name="done" color="green" size="sm"/>
+                  </template>
+                </div>
               </div>
-            </div>
-            
-            <!-- Правый столбец (зоны для сброса) -->
-            <div class="col-5">
-              <div 
-                v-for="(rightItem, rightKey) in question.chooses2 || {}" 
-                :key="`right-${rightKey}`"
-                class="drop-zone q-pa-sm rounded-borders q-mb-sm"
-                :class="{'bg-green-1': isRightItemPaired(index, rightKey)}"
-                @dragover.prevent
-                @dragenter.prevent="highlightDropZone($event)"
-                @dragleave="unhighlightDropZone($event)"
-                @drop="handleDrop($event, index, rightKey)"
-              >
-                <template v-if="isRightItemPaired(index, rightKey)">
-                  <div v-if="leftItemImages[index]?.[getLeftKeyForRight(index, rightKey)!]">
-                    <img 
-                      :src="leftItemImages[index][getLeftKeyForRight(index, rightKey)!]" 
-                      style="max-width: 100%; max-height: 100px;"
-                      @error="handleImageError(index, 'left', getLeftKeyForRight(index, rightKey)!)"
+              
+              <!-- Правый столбец -->
+              <div class="col matching-column">
+                <div 
+                  v-for="(rightItem, rightKey) in question.chooses2 || {}" 
+                  :key="`right-${rightKey}`"
+                  class="drop-zone q-pa-xs rounded-borders q-mb-xs"
+                  :class="{
+                    'has-image': rightItemImages[index]?.[rightKey],
+                    'bg-green-1': isRightItemPaired(index, rightKey)
+                  }"
+                  @dragover.prevent
+                  @dragenter.prevent="highlightDropZone($event)"
+                  @dragleave="unhighlightDropZone($event)"
+                  @drop="handleDrop($event, index, rightKey)"
+                >
+                  <!-- Содержимое правого элемента -->
+                  <template v-if="isRightItemPaired(index, rightKey)">
+                    <div v-if="leftItemImages[index]?.[getLeftKeyForRight(index, rightKey)!]" class="matching-image-container">
+                      <img 
+                        :src="leftItemImages[index][getLeftKeyForRight(index, rightKey)!]" 
+                        class="matching-image"
+                        @error="handleImageError(index, 'left', getLeftKeyForRight(index, rightKey)!)"
+                      />
+                    </div>
+                    <div v-else class="matching-text">
+                      {{ question.chooses1?.[getLeftKeyForRight(index, rightKey)!] }}
+                    </div>
+                    <q-icon 
+                      name="close" 
+                      class="float-right cursor-pointer"
+                      size="xs"
+                      @click.stop="removePair(index, rightKey)"
                     />
-                  </div>
-                  <div v-else>{{ question.chooses1?.[getLeftKeyForRight(index, rightKey)!] }}</div>
-                  <q-icon 
-                    name="close" 
-                    class="float-right cursor-pointer"
-                    @click.stop="removePair(index, rightKey)"
-                  />
-                </template>
-                <template v-else>
-                  <div v-if="rightItemImages[index]?.[rightKey]">
-                    <img 
-                      :src="rightItemImages[index][rightKey]" 
-                      style="max-width: 100%; max-height: 100px;"
-                      @error="handleImageError(index, 'right', rightKey)"
-                    />
-                  </div>
-                  <div v-else>{{ rightItem }}</div>
-                </template>
+                  </template>
+                  <template v-else>
+                    <div v-if="rightItemImages[index]?.[rightKey]" class="matching-image-container">
+                      <img 
+                        :src="rightItemImages[index][rightKey]" 
+                        class="matching-image"
+                        @error="handleImageError(index, 'right', rightKey)"
+                      />
+                    </div>
+                    <div v-else class="matching-text">{{ rightItem }}</div>
+                  </template>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
         <!-- Тип 4: Выбор для каждого из списка -->
         <div v-else-if="question.type === 4" class="q-mb-xl">
@@ -192,6 +208,7 @@
               emit-value
               map-options
             />
+          </div>
           </div>
         </div>
       </template>
@@ -301,7 +318,7 @@ function getRandomQuestions(questions: Question[], count: number): Question[] {
 }
 
 async function fetchJsonTable(path: string) {
-  const response = await fetch(`http://localhost:3000/json-reader?path=${encodeURIComponent(path)}`);
+  const response = await fetch(`${process.env.API_ENDPOINT}/json-reader?path=${encodeURIComponent(path)}`);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
@@ -311,7 +328,7 @@ async function fetchJsonTable(path: string) {
 async function loadImage(basePath: string, imageName: string): Promise<string | null> {
   if (!imageName) return null;
   try {
-    const response = await fetch(`http://localhost:3000/json-reader?path=${encodeURIComponent(`${basePath}/${imageName}`)}`);
+    const response = await fetch(`${process.env.API_ENDPOINT}/json-reader?path=${encodeURIComponent(`${basePath}/${imageName}`)}`);
     if (response.ok) {
       const blob = await response.blob();
       return URL.createObjectURL(blob);
@@ -553,11 +570,11 @@ const submitAnswers = () => {
     return acc + (isAnswerCorrect(question, index) ? 1 : 0);
   }, 0);
   
-  /*$q.notify({
+  $q.notify({
     type: 'positive',
     message: `Тест завершен! Правильных ответов: ${score.value}/${selectedQuestions.value.length}`,
     position: 'top'
-  });*/
+  });
 };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getCurrentAnswer = (type: number, index: number): any => {
@@ -601,27 +618,184 @@ const arraysEqual = (a: string[], b: string[]): boolean => {
 </script>
 
 <style scoped>
+/* Общие стили */
 .text-green {
   color: #21BA45;
 }
 .text-red {
   color: #C10015;
 }
+
+/* Стили для контейнера вопроса */
+.question-container {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.3s ease;
+}
+
+.question-container:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.question-content {
+  padding: 8px;
+}
+
+.question-image {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 4px;
+  display: block;
+  margin: 8px 0;
+}
+
+/* Стили для вариантов ответов */
+.compact-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.q-radio, .q-checkbox {
+  margin-bottom: 0;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.q-radio:hover, .q-checkbox:hover {
+  background-color: #f5f5f5;
+}
+
+/* Стили для изображений в вариантах */
+.option-image-container {
+  max-width: 100%;
+  max-height: 100px;
+  display: inline-block;
+  margin-left: 8px;
+}
+
+.option-image {
+  max-height: 100px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  border: 1px solid #eee;
+}
+
+/* Улучшенные стили для текстовых полей */
+.q-input {
+  margin-top: 12px;
+}
+
+/* Стили для drag-and-drop */
 .drag-source {
   cursor: grab;
   user-select: none;
   border: 1px dashed #1976d2;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  min-height: 40px;
+  background-color: #f8fafc;
 }
+
 .drag-source:active {
   cursor: grabbing;
+  background-color: #e3f2fd;
 }
+
 .drop-zone {
   min-height: 40px;
   border: 1px dashed #666;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  background-color: #fafafa;
 }
+
 .drop-zone.bg-grey-3 {
-  background-color: #eee;
+  background-color: #f0f0f0;
+  border-color: #1976d2;
+}
+/* Стили для drag-and-drop контейнера */
+.drag-drop-container {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+/* Стили для колонок */
+.drag-column, .drop-column {
+  flex: 1;
+  min-width: 0; /* Чтобы колонки не растягивались */
+}
+
+/* Стили для элементов */
+.drag-item, .drop-item {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  min-height: 40px; /* Минимальная высота */
+  height: auto; /* Автоматическая высота под содержимое */
+}
+
+.drag-item {
+  cursor: grab;
+  border: 1px dashed #1976d2;
+  background-color: #f8fafc;
+}
+
+.drag-item:active {
+  cursor: grabbing;
+  background-color: #e3f2fd;
+}
+
+.drop-item {
+  border: 1px dashed #666;
+  background-color: #fafafa;
+}
+
+/* Стили для изображений внутри элементов */
+.drag-drop-image {
+  max-width: 100%;
+  max-height: 80px;
+  object-fit: contain;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+/* Стили для текста */
+.drag-drop-text {
+  flex-grow: 1;
+  word-break: break-word;
+}
+
+/* Подсветка при наведении */
+.drop-item.highlighted {
+  background-color: #f0f0f0;
+  border-color: #1976d2;
+}
+
+/* Стили для парных элементов */
+.paired-item {
+  background-color: #e8f5e9;
+  border-color: #81c784;
+}
+
+/* Иконка удаления */
+.remove-pair-icon {
+  margin-left: 8px;
+  cursor: pointer;
+  color: #e57373;
 }
 </style>

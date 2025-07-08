@@ -35,7 +35,6 @@ export class Inform_blocksController {
             inform_blocks.name,
             inform_blocks.description,
             inform_blocks.tegs,
-            inform_blocks.link_to_folder, 
             inform_blocks.test_numbers,
             inform_blocks.lecture_numbers,
             inform_blocks.lab_numbers,

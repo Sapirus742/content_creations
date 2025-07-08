@@ -11,6 +11,8 @@ import { JsonReaderModule } from './jsonreader/json-reader.module';
 import { FileUploadModule } from './file-upload/file-upload.module';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { ListFilesModule } from './listfiles/listfiles.module';
+import { VideoStreamModule } from './videostream/videostream.module';
  
 
 @Module({
@@ -22,6 +24,8 @@ import { memoryStorage } from 'multer';
         fileSize: 50 * 1024 * 1024, // 50MB
       },
     }),
+    ListFilesModule,
+    VideoStreamModule,
     CoursesModule,
     JsonReaderModule,
     FileUploadModule,

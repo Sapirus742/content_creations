@@ -1,5 +1,6 @@
 <template>
   <div class="q-pa-md">
+    <q-btn flat color="primary" icon="arrow_back" label="Назад" @click="goBack" class="q-mb-md"/>
     <div class="text-h4 q-mb-md">Редактор теста</div>
     
     <div class="row q-mb-md">
@@ -286,7 +287,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute , useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 
 interface Test {
@@ -309,7 +310,7 @@ interface Question {
 
 const $q = useQuasar();
 const route = useRoute();
-
+const router = useRouter();
 const test = ref<Test>({
   count: 0,
   time: 60
@@ -354,6 +355,8 @@ const choiceIsImage = ref<Record<string, boolean>>({});
 const leftChoiceIsImage = ref<Record<string, boolean>>({});
 const rightChoiceIsImage = ref<Record<string, boolean>>({});
 
+const goBack = () => router.go(-1);
+
 const getQuestionTypeName = (type: number) => {
   const typeObj = questionTypes.find(t => t.value === type);
   
@@ -373,7 +376,7 @@ const loadImage = async (filename: string): Promise<string> => {
   try {
     const { blockName, testId } = route.params;
     const response = await fetch(
-      `http://localhost:3000/json-reader?path=${encodeURIComponent(
+      `${process.env.API_ENDPOINT}/json-reader?path=${encodeURIComponent(
         `${blockName}/${testId}/${cleanFilename}`
       )}`
     );
@@ -401,7 +404,7 @@ const uploadFile = async (file: File): Promise<string | null> => {
     formData.append('file', new File([file], encodedFileName, { type: file.type }));
     formData.append('path', `${(`${blockName}/${testId}`)}`);
     
-    const response = await fetch('http://localhost:3000/upload', {
+    const response = await fetch(`${process.env.API_ENDPOINT}/upload`, {
       method: 'POST',
       body: formData,
       headers: {
@@ -412,6 +415,7 @@ const uploadFile = async (file: File): Promise<string | null> => {
     if (!response.ok) throw new Error('Upload failed');
     
     const result = await response.json();
+    loadImage(result.files[0].originalname);
     return `image:${result.files[0].originalname}`; // Возвращаем оригинальное имя
   } catch (error) {
     console.error('Upload error:', error);
@@ -423,7 +427,7 @@ const loadTest = async () => {
   try {
     const { blockName, testId } = route.params;
     const response = await fetch(
-      `http://localhost:3000/json-reader?path=${encodeURIComponent(
+      `${process.env.API_ENDPOINT}/json-reader?path=${encodeURIComponent(
         `${blockName}/${testId}/test.json`
       )}`
     );
@@ -468,7 +472,7 @@ const saveTest = async () => {
     //formData.append('path', `test/1`);
     console.log(`${blockName}/${testId}`);
     
-    const response = await fetch('http://localhost:3000/upload', {
+    const response = await fetch(`${process.env.API_ENDPOINT}/upload`, {
       method: 'POST',
       body: formData
     });

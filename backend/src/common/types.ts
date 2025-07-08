@@ -22,7 +22,6 @@ export type InformationBlocksDto = {
     name: string;
     description: string;
     tegs: string[];
-    link_to_folder: string; 
     test_numbers: number[];
     lecture_numbers: number[];
     lab_numbers: number[];
@@ -33,7 +32,6 @@ export interface CreateInformationBlocksDto {
     name: string;
     description: string;
     tegs: string[];
-    link_to_folder: string; 
     test_numbers: number[];
     lecture_numbers: number[];
     lab_numbers: number[];
@@ -43,7 +41,6 @@ export interface UpdateInformationBlocksDto {
     name?: string;
     description?: string;
     tegs?: string[];
-    link_to_folder?: string; 
     test_numbers?: number[];
     lecture_numbers?: number[];
     lab_numbers?: number[];
