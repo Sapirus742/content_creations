@@ -352,7 +352,7 @@ const openLecture = async (blockName: string, lectureNum: number,lPath:string) =
 // Метод для скачивания лабораторной работы
 const downloadLabFile = async (filePath: string) => {
   try {
-    const response = await fetch(`http://localhost:3000/json-reader?path=${encodeURIComponent(filePath)}`);
+    const response = await fetch(`${process.env.API_ENDPOINT}/json-reader?path=${encodeURIComponent(filePath)}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

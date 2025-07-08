@@ -318,7 +318,7 @@ function getRandomQuestions(questions: Question[], count: number): Question[] {
 }
 
 async function fetchJsonTable(path: string) {
-  const response = await fetch(`http://localhost:3000/json-reader?path=${encodeURIComponent(path)}`);
+  const response = await fetch(`${process.env.API_ENDPOINT}/json-reader?path=${encodeURIComponent(path)}`);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
@@ -328,7 +328,7 @@ async function fetchJsonTable(path: string) {
 async function loadImage(basePath: string, imageName: string): Promise<string | null> {
   if (!imageName) return null;
   try {
-    const response = await fetch(`http://localhost:3000/json-reader?path=${encodeURIComponent(`${basePath}/${imageName}`)}`);
+    const response = await fetch(`${process.env.API_ENDPOINT}/json-reader?path=${encodeURIComponent(`${basePath}/${imageName}`)}`);
     if (response.ok) {
       const blob = await response.blob();
       return URL.createObjectURL(blob);

@@ -71,7 +71,7 @@ static async getLectureInfo(blockName: string, lectureNumber: number,lPath:strin
       return null;
     }
     //Получаем имя файла начинающегося с этого id.
-    const response = await fetch(`http://localhost:3000/listfiles/list?path=${encodeURIComponent(lPath)}`);
+    const response = await fetch(`${process.env.API_ENDPOINT}/listfiles/list?path=${encodeURIComponent(lPath)}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -83,7 +83,7 @@ static async getLectureInfo(blockName: string, lectureNumber: number,lPath:strin
       file.startsWith(`${lectureNumber}_`) && file.endsWith('.mp4')
     );
     
-    const lectureUrl = 'http://localhost:3000/video-stream?path=';
+    const lectureUrl = `${process.env.API_ENDPOINT}/video-stream?path=`;
 
     return {
       number: lecture.number,
@@ -121,7 +121,7 @@ static async getLectureInfo(blockName: string, lectureNumber: number,lPath:strin
   static async getLabFiles(blockName: string, labNum: number): Promise<{name: string, path: string}[]> {
   try {
     const relativePath = `${blockName}/${labNum}`;
-    const response = await fetch(`http://localhost:3000/listfiles/list?path=${encodeURIComponent(relativePath)}`);
+    const response = await fetch(`${process.env.API_ENDPOINT}/listfiles/list?path=${encodeURIComponent(relativePath)}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

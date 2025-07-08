@@ -376,7 +376,7 @@ const loadImage = async (filename: string): Promise<string> => {
   try {
     const { blockName, testId } = route.params;
     const response = await fetch(
-      `http://localhost:3000/json-reader?path=${encodeURIComponent(
+      `${process.env.API_ENDPOINT}/json-reader?path=${encodeURIComponent(
         `${blockName}/${testId}/${cleanFilename}`
       )}`
     );
@@ -404,7 +404,7 @@ const uploadFile = async (file: File): Promise<string | null> => {
     formData.append('file', new File([file], encodedFileName, { type: file.type }));
     formData.append('path', `${(`${blockName}/${testId}`)}`);
     
-    const response = await fetch('http://localhost:3000/upload', {
+    const response = await fetch(`${process.env.API_ENDPOINT}/upload`, {
       method: 'POST',
       body: formData,
       headers: {
@@ -427,7 +427,7 @@ const loadTest = async () => {
   try {
     const { blockName, testId } = route.params;
     const response = await fetch(
-      `http://localhost:3000/json-reader?path=${encodeURIComponent(
+      `${process.env.API_ENDPOINT}/json-reader?path=${encodeURIComponent(
         `${blockName}/${testId}/test.json`
       )}`
     );
@@ -472,7 +472,7 @@ const saveTest = async () => {
     //formData.append('path', `test/1`);
     console.log(`${blockName}/${testId}`);
     
-    const response = await fetch('http://localhost:3000/upload', {
+    const response = await fetch(`${process.env.API_ENDPOINT}/upload`, {
       method: 'POST',
       body: formData
     });
