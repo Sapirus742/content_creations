@@ -550,6 +550,7 @@ const uploadLecture = async () => {
   try {
     const blockName = `${selectedBlock.value.id}_${selectedBlock.value.name}`;
     const nextId = getNextId();
+    // eslint-disable-next-line vue/no-ref-as-operand
     const fileName = `${nextId}_${newTestName}`;
 
     const formData = new FormData();
