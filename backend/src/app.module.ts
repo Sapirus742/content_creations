@@ -13,7 +13,7 @@ import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ListFilesModule } from './listfiles/listfiles.module';
 import { VideoStreamModule } from './videostream/videostream.module';
- 
+import { CopyFolderModule } from './copyfolder/copyfolder.module';
 
 @Module({
 
@@ -24,6 +24,7 @@ import { VideoStreamModule } from './videostream/videostream.module';
         fileSize: 50 * 1024 * 1024, // 50MB
       },
     }),
+    CopyFolderModule,
     ListFilesModule,
     VideoStreamModule,
     CoursesModule,

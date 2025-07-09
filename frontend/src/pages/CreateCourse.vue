@@ -76,7 +76,7 @@
           <q-btn
               color="secondary"
               label="Редактор блоков"
-              to="create-block/create"
+              to="create-block/create/0"
             />
           <q-btn 
             color="primary" 

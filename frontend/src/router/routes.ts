@@ -34,7 +34,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import('pages/CreateCourse.vue')
       },
      {
-        path: 'create-block/:editblock',
+        path: 'create-block/:editblock/:block',
         name: 'InfoBlock',
         component: () => import('pages/CreateInfoBlock.vue'),
         props:true

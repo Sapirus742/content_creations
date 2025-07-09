@@ -37,18 +37,7 @@
               type="textarea"
             />
           </div>
-          
-          <div class="col-12">
-            <q-select
-              v-model="newBlock.tags"
-              label="Теги"
-              outlined
-              multiple
-              use-chips
-              input-debounce="0"
-              @new-value="addTag"
-            />
-          </div>
+        
           
           <div class="col-12 q-mt-md">
             <q-btn
@@ -84,6 +73,7 @@
                 label="Название блока"
                 outlined
                 :rules="[val => !!val || 'Обязательное поле']"
+                :disable="!change"
               />
             </div>
             
@@ -93,18 +83,7 @@
                 label="Описание блока"
                 outlined
                 type="textarea"
-              />
-            </div>
-            
-            <div class="col-12">
-              <q-select
-                v-model="editBlock.tags"
-                label="Теги"
-                outlined
-                multiple
-                use-chips
-                input-debounce="0"
-                @new-value="addTag"
+                :disable="!change"
               />
             </div>
 
@@ -124,6 +103,7 @@
                       icon="delete"
                       color="negative"
                       @click="deleteLecture(lecture.id)"
+                      :disable="!change"
                     />
                   </q-item-section>
                 </q-item>
@@ -134,6 +114,7 @@
                     v-model="newTestName"
                     label="Название лекции"
                     outlined
+                    :disable="!change"
                   />
                 </div>
               <div class="col-4">
@@ -141,7 +122,7 @@
                   v-model="newLectureFile"
                   label="Загрузить лекцию (видео)"
                   accept="video/*"
-                  
+                  :disable="!change"
                   outlined
                 >
                 </q-file>
@@ -151,7 +132,7 @@
                       label="Добавить"
                       icon="cloud_upload"
                       @click="uploadLecture"
-                      :disable="!newTestName || !newLectureFile"
+                      :disable="!change||!newTestName || !newLectureFile"
                     />
               </div>
             </div>
@@ -171,6 +152,7 @@
                       icon="delete"
                       color="negative"
                       @click="deleteLab(lab.id)"
+                      :disable="!change"
                     />
                   </q-item-section>
                 </q-item>
@@ -182,6 +164,7 @@
                     v-model="newLabName"
                     label="Название лабораторной"
                     outlined
+                    :disable="!change"
                   />
                 </div>
                 <div class="col-4">
@@ -189,6 +172,7 @@
                     v-model="newLabFile"
                     label="Файл"
                     outlined
+                    :disable="!change"
                   />
                 </div>
                 <div class="col-12">
@@ -196,7 +180,7 @@
                     color="primary"
                     label="Добавить"
                     @click="uploadLab"
-                    :disable="!newLabFile || !newLabName"
+                    :disable="!change||!newLabFile || !newLabName"
                   />
                 </div>
               </div>
@@ -218,6 +202,7 @@
                         icon="edit"
                         color="primary"
                         @click="editTest(test.id)"
+                        :disable="!change"
                       />
                       <q-btn
                         flat
@@ -225,6 +210,7 @@
                         icon="delete"
                         color="negative"
                         @click="deleteTest(test.id)"
+                        :disable="!change"
                       />
                     </div>
                   </q-item-section>
@@ -239,6 +225,7 @@
                     label="Файл теста (JSON)"
                     accept=".json"
                     outlined
+                    :disable="!change"
                   />
                 </div>
                 <div class="col-12">
@@ -246,19 +233,41 @@
                     color="primary"
                     label="Добавить"
                     @click="uploadTest"
+                    :disable="!change"
                   />
                 </div>
               </div>
             </div>
 
-            <div class="col-12 q-mt-md">
+            <div class="col-6 q-mt-md">
               <q-btn
                 color="primary"
                 label="Сохранить изменения"
                 @click="updateBlock"
                 :loading="updatingBlock"
+                :disable="!change"
               />
             </div>
+            
+            <div v-if="!change" class="col-6 q-mt-md">
+              <q-btn
+                color="primary"
+                label="Сделать редактируемую копию"
+                @click="copyBlock"
+                :loading="updatingBlock"
+                :disable="change"
+              />
+            </div>
+            <div v-if="change" class="col-6 q-mt-md">
+              <q-btn
+                color="primary"
+                label="Сделать нередактируемой"
+                @click="updateChangeBlock"
+                :loading="updatingBlock"
+                :disable="!change"
+              />
+            </div>
+          
           </template>
         </div>
       </q-tab-panel>
@@ -270,20 +279,23 @@
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
+import{InformBlocksStatus} from '../../../backend/src/common/types';
 
 const $q = useQuasar();
 const router = useRouter();
 const route =useRoute();
 const API_ENDPOINT = process.env.API_ENDPOINT || 'http://localhost:3000';
-
+let change= false;
 // Состояние компонента
 const tab=ref(route.path.includes('edit') ? 'edit' : 'create');
+
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
-const blocks = ref<any[]>([]);
+let blocks = ref<any[]>([]);
 //eslint-disable-next-line @typescript-eslint/no-explicit-any
 const selectedBlock = ref<any>(null);
 const creatingBlock = ref(false);
 const updatingBlock = ref(false);
+const blockId =route.params.block;
 
 // Данные для нового блока
 const newBlock = ref({
@@ -317,24 +329,18 @@ const tests = ref<any[]>([]);
 // Методы
 const toCreate=()=>
 {
-  router.push('/create-block/create');
+  router.push(`/create-block/create/${blockId}`).then(() => {
+  window.location.reload();
+});
 }
 const toEdit=()=>
 {
-  router.push('/create-block/edit');
+  router.push(`/create-block/edit/${blockId}`).then(() => {
+  window.location.reload();
+});
 }
 const goToMainPage = () => {
   router.go(-1);
-};
-//eslint-disable-next-line @typescript-eslint/no-explicit-any
-const addTag = (val: string, done: (item: any) => void) => {
-  const tag = val.trim();
-  if (tag) {
-    if (!newBlock.value.tags.includes(tag)) {
-      newBlock.value.tags.push(tag);
-    }
-    done(tag);
-  }
 };
 
 // Загрузка всех блоков
@@ -344,23 +350,65 @@ const loadBlocks = async () => {
     if (!response.ok) throw new Error('Ошибка загрузки блоков');
     blocks.value = await response.json();
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка загрузки блоков',
-      position: 'top'
-    });
     console.error('Ошибка загрузки блоков:', error);
   }
 };
+//Создание редактируемой копии блока
+const copyBlock = async () => {
+  creatingBlock.value = true;
+  try {
+    const response = await fetch(`${API_ENDPOINT}/inform_blocks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: selectedBlock.value.name,
+        description: selectedBlock.value.description,
+        status:'Changing',
+        test_numbers:selectedBlock.value.test_numbers,
+        lab_numbers:selectedBlock.value.lab_numbers,
+        lecture_numbers:selectedBlock.value.lecture_numbers
+      })
+    });
 
+    if (!response.ok) throw new Error('Ошибка создания блока');
+
+    const data = await response.json();
+    console.log(data);
+    const sourcePath=String(selectedBlock.value.id)+'_'+selectedBlock.value.name;
+    const destinationPath=String(data.id)+'_'+data.name;
+    console.log(sourcePath);
+    console.log(destinationPath);
+    try {
+
+      const response = await fetch(`${API_ENDPOINT}/copyfolder/copy?source=${encodeURIComponent(sourcePath)}&destination=${encodeURIComponent(destinationPath)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to copy folder')
+      }
+    } catch (error) {
+      throw new Error('Network error occurred')
+    }
+    tab.value = 'edit';
+    router.push(`/create-block/edit/${blocks.value.length+1}`).then(() => {
+    window.location.reload()});
+    loadBlockDetails();
+  } catch (error) {
+    console.error('Ошибка создания блока:', error);
+  } finally {
+    creatingBlock.value = false;
+  }
+};
 // Создание нового блока
 const createBlock = async () => {
   if (!newBlock.value.name) {
-    $q.notify({
-      type: 'negative',
-      message: 'Введите название блока',
-      position: 'top'
-    });
     return;
   }
 
@@ -374,7 +422,7 @@ const createBlock = async () => {
       body: JSON.stringify({
         name: newBlock.value.name,
         description: newBlock.value.description,
-        tegs: newBlock.value.tags,
+        status:InformBlocksStatus.changing
       })
     });
 
@@ -382,22 +430,13 @@ const createBlock = async () => {
 
     const data = await response.json();
 
-    $q.notify({
-      type: 'positive',
-      message: 'Блок успешно создан',
-      position: 'top'
-    });
-
     await loadBlocks();
     tab.value = 'edit';
     selectedBlock.value = data;
+    router.push(`/create-block/edit/${blocks.value.length+1}`).then(() => {
+    window.location.reload()});
     loadBlockDetails();
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка создания блока',
-      position: 'top'
-    });
     console.error('Ошибка создания блока:', error);
   } finally {
     creatingBlock.value = false;
@@ -406,7 +445,12 @@ const createBlock = async () => {
 
 // Загрузка деталей блока
 const loadBlockDetails = async () => {
-  console.log(selectedBlock);
+  if(blocks.value.indexOf(selectedBlock.value)!=Number(blockId)-1)
+  {
+    router.push(`/create-block/edit/${blocks.value.indexOf(selectedBlock.value)+1}`).then(() => {
+    window.location.reload()});
+    return;
+  }
   if (!selectedBlock.value) return;
 
   try {
@@ -424,11 +468,6 @@ const loadBlockDetails = async () => {
     await loadLabs();
     await loadTests();
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка загрузки блока',
-      position: 'top'
-    });
     console.error('Ошибка загрузки блока:', error);
   }
 };
@@ -545,13 +584,12 @@ const loadTests = async () => {
 
 // Загрузка лекции
 const uploadLecture = async () => {
-  if (!newTestName.value ||!newLectureFile.value || !selectedBlock.value) return;
+  if (!change||!newTestName.value ||!newLectureFile.value || !selectedBlock.value) return;
 
   try {
     const blockName = `${selectedBlock.value.id}_${selectedBlock.value.name}`;
     const nextId = getNextId();
-    // eslint-disable-next-line vue/no-ref-as-operand
-    const fileName = `${nextId}_${newTestName}`;
+    const fileName = `${nextId}_${newTestName.value}.mp4`;
 
     const formData = new FormData();
     const file = newLectureFile.value;
@@ -566,27 +604,17 @@ const uploadLecture = async () => {
 
     if (!response.ok) throw new Error('Ошибка загрузки лекции');
 
-    $q.notify({
-      type: 'positive',
-      message: 'Лекция успешно загружена',
-      position: 'top'
-    });
-
     await loadBlockDetails();
     newLectureFile.value = null;
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка загрузки лекции',
-      position: 'top'
-    });
+    
     console.error('Ошибка загрузки лекции:', error);
   }
 };
 
 // Загрузка лабораторной
 const uploadLab = async () => {
-  if (!newLabFile.value || !newLabName.value || !selectedBlock.value) return;
+  if (!change||!newLabFile.value || !newLabName.value || !selectedBlock.value) return;
 
   try {
     const blockName = `${selectedBlock.value.id}_${selectedBlock.value.name}`;
@@ -608,21 +636,10 @@ const uploadLab = async () => {
 
     if (!response.ok) throw new Error('Ошибка загрузки лабораторной');
 
-    $q.notify({
-      type: 'positive',
-      message: 'Лабораторная работа успешно загружена',
-      position: 'top'
-    });
-
     await loadBlockDetails();
     newLabFile.value = null;
     newLabName.value = '';
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка загрузки лабораторной',
-      position: 'top'
-    });
     console.error('Ошибка загрузки лабораторной:', error);
   }
 };
@@ -639,7 +656,7 @@ const getNextId = () => {
 
 // Загрузка теста
 const uploadTest = async () => {
-  if (!selectedBlock.value) return;
+  if (!change||!selectedBlock.value) return;
 
   try {
     const blockName = `${selectedBlock.value.id}_${selectedBlock.value.name}`;
@@ -660,28 +677,17 @@ const uploadTest = async () => {
 
     if (!response.ok) throw new Error('Ошибка загрузки теста');
 
-    $q.notify({
-      type: 'positive',
-      message: 'Тест успешно загружен',
-      position: 'top'
-    });
-
     await loadBlockDetails();
     newTestFile.value = null;
     newTestName.value = '';
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка загрузки теста',
-      position: 'top'
-    });
     console.error('Ошибка загрузки теста:', error);
   }
 };
 
 // Удаление лекции
 const deleteLecture = async (id: number) => {
-  if (!selectedBlock.value) return;
+  if (!change||!selectedBlock.value) return;
   try {
     console.log(id);
   } catch (error) {
@@ -692,7 +698,7 @@ const deleteLecture = async (id: number) => {
 
 // Удаление лабораторной
 const deleteLab = async (id: number) => {
-  if (!selectedBlock.value) return;
+  if (!change||!selectedBlock.value) return;
   try {
     console.log(id);
   } catch (error) {
@@ -702,7 +708,7 @@ const deleteLab = async (id: number) => {
 
 // Удаление теста
 const deleteTest = async (id: number) => {
-  if (!selectedBlock.value) return;
+  if (!change||!selectedBlock.value) return;
 
   try {
     console.log(id);
@@ -713,14 +719,16 @@ const deleteTest = async (id: number) => {
 
 // Редактирование теста
 const editTest = (id: number) => {
-  const test = tests.value.find(t => t.id === id);
-  if (!test || !test.path) return;
-  router.push(`/edit/${test.path.replace('/test.json', '')}`);
+  if(change){
+    const test = tests.value.find(t => t.id === id);
+    if (!test || !test.path) return;
+    router.push(`/edit/${test.path.replace('/test.json', '')}`);
+  }
 };
 
 // Обновление блока
 const updateBlock = async () => {
-  if (!selectedBlock.value) return;
+  if (!change||!selectedBlock.value) return;
 
   updatingBlock.value = true;
   try {
@@ -732,7 +740,6 @@ const updateBlock = async () => {
       body: JSON.stringify({
         name: editBlock.value.name,
         description: editBlock.value.description,
-        tegs: editBlock.value.tags,
         lecture_numbers:lectures.value.map(l => l.id),
         lab_numbers:labs.value.map(l => l.id),
         test_numbers:tests.value.map(l => l.id),
@@ -740,12 +747,6 @@ const updateBlock = async () => {
     });
 
     if (!response.ok) throw new Error('Ошибка обновления блока');
-
-    $q.notify({
-      type: 'positive',
-      message: 'Блок успешно обновлен',
-      position: 'top'
-    });
 
     await loadBlocks();
   } catch (error) {
@@ -759,12 +760,47 @@ const updateBlock = async () => {
     updatingBlock.value = false;
   }
 };
+const updateChangeBlock = async () => {
+  if (!change||!selectedBlock.value) return;
+
+  updatingBlock.value = true;
+  try {
+    const response = await fetch(`${API_ENDPOINT}/inform_blocks/${selectedBlock.value.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: editBlock.value.name,
+        description: editBlock.value.description,
+        lecture_numbers:lectures.value.map(l => l.id),
+        lab_numbers:labs.value.map(l => l.id),
+        test_numbers:tests.value.map(l => l.id),
+        status:InformBlocksStatus.ready,
+      })
+    });
+
+    if (!response.ok) throw new Error('Ошибка обновления блока');
+
+
+    await loadBlocks();
+    window.location.reload();
+  } catch (error) {
+    console.error('Ошибка обновления блока:', error);
+  } finally {
+    updatingBlock.value = false;
+  }
+};
 
 // Инициализация
 onMounted(async () => {
   await loadBlocks();
-  
-
+  if(blockId!='0')
+  {
+    selectedBlock.value=blocks.value[Number(blockId)-1];
+    loadBlockDetails();
+  }
+  change = InformBlocksStatus.changing==selectedBlock.value.status;
 });
 </script>
 
