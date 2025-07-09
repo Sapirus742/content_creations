@@ -545,12 +545,12 @@ const loadTests = async () => {
 
 // Загрузка лекции
 const uploadLecture = async () => {
-  if (!newLectureFile.value || !selectedBlock.value) return;
+  if (!newTestName.value ||!newLectureFile.value || !selectedBlock.value) return;
 
   try {
     const blockName = `${selectedBlock.value.id}_${selectedBlock.value.name}`;
     const nextId = getNextId();
-    const fileName = `${nextId}_${newLectureFile.value.name}`;
+    const fileName = `${nextId}_${newTestName}`;
 
     const formData = new FormData();
     const file = newLectureFile.value;
@@ -638,7 +638,7 @@ const getNextId = () => {
 
 // Загрузка теста
 const uploadTest = async () => {
-  if (!newTestName.value || !selectedBlock.value) return;
+  if (!selectedBlock.value) return;
 
   try {
     const blockName = `${selectedBlock.value.id}_${selectedBlock.value.name}`;
@@ -647,7 +647,8 @@ const uploadTest = async () => {
     // Затем загружаем файл
     const formData = new FormData();
     const filedata={};
-    const test = newTestFile.value||filedata;
+    const test = newTestFile.value!=null? newTestFile.value:filedata;
+    console.log(newTestFile.value?.name);
     formData.append('file', new Blob([JSON.stringify(test)], { type: 'application/json' }), 'test.json');
     formData.append('path', `${blockName}/${dirName}`);
 
