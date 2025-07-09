@@ -1,5 +1,5 @@
 export enum InformBlocksStatus {
-  Changing = 'Changing',
+  changing = 'Changing',
   ready = 'Ready',
 }
 
