@@ -340,7 +340,7 @@ const toEdit=()=>
 });
 }
 const goToMainPage = () => {
-  router.go(-1);
+  router.push('MainPage');
 };
 
 // Загрузка всех блоков
