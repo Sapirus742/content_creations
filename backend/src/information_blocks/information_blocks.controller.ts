@@ -34,7 +34,7 @@ export class Inform_blocksController {
         return this.inform_blocksService.create(
             inform_blocks.name,
             inform_blocks.description,
-            inform_blocks.tegs,
+            inform_blocks.status,
             inform_blocks.test_numbers,
             inform_blocks.lecture_numbers,
             inform_blocks.lab_numbers,

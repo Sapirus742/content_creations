@@ -1,3 +1,8 @@
+export enum InformBlocksStatus {
+  Changing = 'Changing',
+  ready = 'Ready',
+}
+
 export type CoursesDto = {
     id: number;
     name: string;
@@ -21,7 +26,7 @@ export type InformationBlocksDto = {
     id: number;
     name: string;
     description: string;
-    tegs: string[];
+    status: InformBlocksStatus;
     test_numbers: number[];
     lecture_numbers: number[];
     lab_numbers: number[];
@@ -31,7 +36,7 @@ export type InformationBlocksDto = {
 export interface CreateInformationBlocksDto {
     name: string;
     description: string;
-    tegs: string[];
+    status: InformBlocksStatus;
     test_numbers: number[];
     lecture_numbers: number[];
     lab_numbers: number[];
@@ -40,7 +45,7 @@ export interface CreateInformationBlocksDto {
 export interface UpdateInformationBlocksDto {
     name?: string;
     description?: string;
-    tegs?: string[];
+    status?: InformBlocksStatus;
     test_numbers?: number[];
     lecture_numbers?: number[];
     lab_numbers?: number[];
