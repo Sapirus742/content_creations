@@ -403,7 +403,7 @@ const submitCourse = async () => {
         const blockData = {
           name: block.title || `${blockTitles[block.type]} ${index + 1}`,
           description: block.content || '',
-          status: InformBlocksStatus.changing,
+          status: InformBlocksStatus.ready,
           test_numbers: [],
           lecture_numbers: [],
           lab_numbers: []
