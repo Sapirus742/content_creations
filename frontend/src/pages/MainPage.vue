@@ -33,7 +33,7 @@
               icon="search"
               @click="handleSearch"
             />
-            <q-item-label class="text-h4">Или</q-item-label>
+            <q-item-label class="text-h4"></q-item-label>
             <q-btn
               color="secondary"
               label="Создать новый"
