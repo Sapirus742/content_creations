@@ -5,7 +5,7 @@ import {
     ManyToMany,
 } from 'typeorm';   
 import { Courses } from './courses.entity';
-import { InformationBlocksDto } from 'src/common/types';
+import { InformationBlocksDto, InformBlocksStatus } from 'src/common/types';
   
 
 @Entity()
@@ -20,8 +20,8 @@ export class Information_blocks {
     @Column({default:''})
     description: string;
 
-    @Column({type: 'varchar', array: true, default: '{}'})
-    tegs: string[];
+    @Column({default: InformBlocksStatus.ready})
+    status: InformBlocksStatus;
 
     @Column({type: 'varchar', array: true, default: '{}'})
     test_numbers: number[];
@@ -40,7 +40,7 @@ export class Information_blocks {
             id: this.id,
             name: this.name,
             description: this.description,
-            tegs: this.tegs,
+            status: this.status,
             test_numbers: this.test_numbers,
             lecture_numbers: this.lecture_numbers,
             lab_numbers: this.lab_numbers,

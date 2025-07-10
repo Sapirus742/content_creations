@@ -76,25 +76,17 @@
       <!-- Шаг 3: Контент (ручное создание) -->
       <q-step name="manual-content" title="Содержание курса" icon="library_books" v-if="selectedMethod === 'manual'">
         <div class="text-h6 q-mb-md">Добавьте материалы курса</div>
-        
         <div class="row q-gutter-md q-mb-md">
+          <q-btn
+              color="secondary"
+              label="Редактор блоков"
+              to="create-block/create/0"
+            />
           <q-btn 
             color="primary" 
             icon="add" 
-            label="Лекция" 
+            label="Блок" 
             @click="addBlock('lecture')"
-          />
-          <q-btn 
-            color="primary" 
-            icon="add" 
-            label="Практика" 
-            @click="addBlock('practice')"
-          />
-          <q-btn 
-            color="primary" 
-            icon="add" 
-            label="Тест" 
-            @click="addBlock('test')"
           />
         </div>
         
@@ -264,7 +256,7 @@ const course = ref<Course>({
 });
 
 const blockTitles: Record<BlockType, string> = {
-  lecture: 'Лекция',
+  lecture: 'Блок',
   practice: 'Практическое задание',
   test: 'Тест'
 };

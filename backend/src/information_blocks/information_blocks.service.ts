@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Courses } from 'src/orm/courses.entity';
 import { Information_blocks } from 'src/orm/information_blocks.entity';
-import { UpdateCoursesDto, UpdateInformationBlocksDto } from 'src/common/types';
+import { InformBlocksStatus, UpdateCoursesDto, UpdateInformationBlocksDto } from 'src/common/types';
 
 @Injectable()
 export class Information_blocksService {
@@ -29,7 +29,7 @@ export class Information_blocksService {
     async create(
         name: string,
         description: string,
-        tegs: string[],
+        status: InformBlocksStatus,
         test_numbers: number[],
         lecture_numbers: number[],
         lab_numbers: number[],
@@ -37,7 +37,7 @@ export class Information_blocksService {
         const inform_blocks = new Information_blocks();
         inform_blocks.name = name;
         inform_blocks.description = description;
-        inform_blocks.tegs = tegs;
+        inform_blocks.status = status;
         inform_blocks.test_numbers = test_numbers;
         inform_blocks.lecture_numbers = lecture_numbers;
         inform_blocks.lab_numbers = lab_numbers;
