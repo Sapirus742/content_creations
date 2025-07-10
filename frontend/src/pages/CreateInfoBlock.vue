@@ -140,6 +140,13 @@
                       <template v-else-if="item.type === 'test'">
                         <q-btn flat round icon="edit" color="primary" @click="editTest(item.id)" :disable="!change" />
                       </template>
+                      <!-- В разделе q-item-section side, рядом с кнопкой удаления -->
+                      <template v-if="change">
+                        <q-btn flat round icon="arrow_upward" color="primary" 
+                              @click.stop="moveItemUp(item)" :disable="isFirstItem(item)" />
+                        <q-btn flat round icon="arrow_downward" color="primary" 
+                              @click.stop="moveItemDown(item)" :disable="isLastItem(item)" />
+                      </template>
                       <q-btn
                         flat
                         round
@@ -1040,6 +1047,125 @@ const updateChangeBlock = async () => {
   }
 };
 
+// Проверка, является ли элемент первым в общем списке
+const isFirstItem = (item: {id: number, type: string}) => {
+  return sortedMaterials.value[0].id === item.id && 
+         sortedMaterials.value[0].type === item.type;
+};
+
+// Проверка, является ли элемент последним в общем списке
+const isLastItem = (item: {id: number, type: string}) => {
+  const last = sortedMaterials.value[sortedMaterials.value.length - 1];
+  return last.id === item.id && last.type === item.type;
+};
+
+// Получение предыдущего элемента любого типа
+const getPreviousItem = (item: {id: number, type: string}) => {
+  const index = sortedMaterials.value.findIndex(
+    m => m.id === item.id && m.type === item.type
+  );
+  return index > 0 ? sortedMaterials.value[index - 1] : null;
+};
+
+// Получение следующего элемента любого типа
+const getNextItem = (item: {id: number, type: string}) => {
+  const index = sortedMaterials.value.findIndex(
+    m => m.id === item.id && m.type === item.type
+  );
+  return index < sortedMaterials.value.length - 1 
+    ? sortedMaterials.value[index + 1] 
+    : null;
+};
+
+// Основной метод для перемещения элементов
+const swapItems = async (item1: {id: number, type: string}, item2: {id: number, type: string}) => {
+  if (!change || !selectedBlock.value) return;
+
+  const blockPath = `${selectedBlock.value.id}_${selectedBlock.value.name}`;
+  
+  try {
+    // Временные пути для избежания конфликтов
+    const tempPath1 = `${blockPath}/temp_${Date.now()}_${item1.id}`;
+    
+    // Получаем реальные пути
+    const path1 = getFullPath(item1);
+    const path2 = getFullPath(item2);
+    const path1new =getFullPathNew(item1,item2);
+    const path2new =getFullPathNew(item2,item1);
+    if (!path1 || !path2||!path1new||!path2new) return;
+    // 1. Перемещаем первый элемент во временное место
+    await renameItem(path1, tempPath1);
+    
+    // 2. Перемещаем второй элемент на место первого
+    await renameItem(path2, path2new);
+    
+    // 3. Перемещаем первый элемент из временного места на место второго
+    await renameItem(tempPath1, path1new);
+    
+    // Обновляем данные
+    await loadBlockDetails();
+  } catch (error) {
+    console.error('Ошибка при перемещении элементов:', error);
+  }
+};
+//Новый путь
+const getFullPathNew = (item: {id: number, type: string},item2: {id: number, type: string}) => {
+  const blockPath=`${selectedBlock.value.id}_${selectedBlock.value.name}`;
+  if (item.type === 'lecture') {
+    const lecture = lectures.value.find(l => l.id === item.id);
+    return lecture ? `${blockPath}/${item2.id}_${lecture.name}.mp4` : null;
+  } else {
+    return `${blockPath}/${item2.id}`;
+  }
+};
+// Вспомогательный метод для получения полного пути
+const getFullPath = (item: {id: number, type: string}) => {
+  const blockPath=`${selectedBlock.value.id}_${selectedBlock.value.name}`;
+  if (item.type === 'lecture') {
+    const lecture = lectures.value.find(l => l.id === item.id);
+    return lecture ? `${blockPath}/${lecture.path.split('/').pop()}` : null;
+  } else {
+    return `${blockPath}/${item.id}`;
+  }
+};
+
+// Метод для переименования через API
+const renameItem = async (oldPath: string, newPath: string) => {
+  try {
+    const response = await fetch(`${API_ENDPOINT}/rename`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        oldPath,
+        newName: newPath.split('/').pop()
+      })
+    });
+    
+    if (!response.ok) throw new Error('Rename failed');
+  } catch (error) {
+    console.error('Rename error:', error);
+    throw error;
+  }
+};
+
+// Методы для кнопок вверх/вниз
+const moveItemUp = async (item: {id: number, type: string}) => {
+  const prevItem = getPreviousItem(item);
+  if (prevItem) {
+    await swapItems(item, prevItem);
+  }
+};
+
+const moveItemDown = async (item: {id: number, type: string}) => {
+  const nextItem = getNextItem(item);
+  if (nextItem) {
+    await swapItems(nextItem, item);
+  }
+};
+
+
 // Инициализация
 onMounted(async () => {
   await loadBlocks();
@@ -1066,5 +1192,8 @@ onMounted(async () => {
 
 .q-btn--outline {
   border: 1px solid currentColor;
+}
+.q-btn--round {
+  margin: 0 2px;
 }
 </style>

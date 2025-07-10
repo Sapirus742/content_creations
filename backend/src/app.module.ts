@@ -14,6 +14,7 @@ import { memoryStorage } from 'multer';
 import { ListFilesModule } from './listfiles/listfiles.module';
 import { VideoStreamModule } from './videostream/videostream.module';
 import { CopyFolderModule } from './copyfolder/copyfolder.module';
+import { RenameModule } from './rename/rename.module';
 
 @Module({
 
@@ -24,6 +25,7 @@ import { CopyFolderModule } from './copyfolder/copyfolder.module';
         fileSize: 50 * 1024 * 1024, // 50MB
       },
     }),
+    RenameModule,
     CopyFolderModule,
     ListFilesModule,
     VideoStreamModule,
