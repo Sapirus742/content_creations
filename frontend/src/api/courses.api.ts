@@ -19,12 +19,12 @@ export async function get(id: number): Promise<CoursesDto | undefined> {
 
 export async function create(
   newCourse: CreateCoursesDto
-): Promise<CoursesDto | undefined> {
+): Promise<CoursesDto> {  // Убрали undefined из возвращаемого типа
   const response = await api.post('/course', newCourse);
-  if (response.status == 201) {
-    return response.data;
+  if (response.status !== 201) {
+    throw new Error(response.data?.message || 'Ошибка создания курса');
   }
-  return;
+  return response.data;
 }
 
 export async function update(

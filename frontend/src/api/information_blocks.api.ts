@@ -18,13 +18,13 @@ export async function get(id: number): Promise<InformationBlocksDto | undefined>
 }
 
 export async function create(
-  newInform_block: CreateInformationBlocksDto
-): Promise<InformationBlocksDto | undefined> {
-  const response = await api.post('/inform_blocks', newInform_block);
+  newBlock: CreateInformationBlocksDto
+): Promise<InformationBlocksDto> {
+  const response = await api.post('/inform_blocks', newBlock);
   if (response.status == 201) {
     return response.data;
   }
-  return;
+  throw new Error('Ошибка создания блока');
 }
 
 export async function update(
