@@ -29,11 +29,7 @@
         />
         
         <q-stepper-navigation>
-          <q-btn 
-            @click="step = 'method'" 
-            color="primary" 
-            label="Продолжить" 
-          />
+          <q-btn @click="step = 'method'" color="primary" label="Продолжить" />
         </q-stepper-navigation>
       </q-step>
 
@@ -212,16 +208,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
-import { useCoursesStore } from '../stores/courses.store';
-
 
 const router = useRouter();
 const $q = useQuasar();
-const coursesStore = useCoursesStore();
-
 const step = ref<'basic' | 'method' | 'manual-content' | 'auto-content'>('basic');
 const selectedMethod = ref<'manual' | 'auto' | null>(null);
 const isSubmitting = ref(false);
@@ -230,6 +222,7 @@ const autoCreationProgress = ref(0);
 const autoCreatedBlocks = ref<AutoBlockGroup[]>([]);
 const showConfirmDialog = ref(false);
 
+// Типы для блока курса
 type BlockType = 'lecture' | 'practice' | 'test';
 
 interface CourseBlock {
@@ -255,6 +248,7 @@ const course = ref<Course>({
   blocks: []
 });
 
+// Настройки отображения блоков
 const blockTitles: Record<BlockType, string> = {
   lecture: 'Блок',
   practice: 'Практическое задание',
@@ -273,6 +267,7 @@ const blockColors: Record<BlockType, string> = {
   test: 'green'
 };
 
+// Темы для блоков курса по информатике
 const informaticsTopics = [
   'Основы алгоритмизации',
   'Программирование на Python',
@@ -286,10 +281,6 @@ const informaticsTopics = [
   'Компьютерная графика'
 ];
 
-watch(course, (newVal) => {
-  localStorage.setItem('courseDraft', JSON.stringify(newVal));
-}, { deep: true });
-
 const startManualCreation = () => {
   selectedMethod.value = 'manual';
   step.value = 'manual-content';
@@ -301,6 +292,7 @@ const startAutoCreation = () => {
   autoCreationProgress.value = 0;
   step.value = 'auto-content';
   
+  // Имитация процесса автоматического создания (4 секунды)
   const interval = setInterval(() => {
     autoCreationProgress.value += 5;
     if (autoCreationProgress.value >= 100) {
@@ -308,10 +300,11 @@ const startAutoCreation = () => {
       autoCreationInProgress.value = false;
       generateAutoCreatedBlocks();
     }
-  }, 200);
+  }, 200); // 20 шагов × 200ms = 4 секунды
 };
 
 const generateAutoCreatedBlocks = () => {
+  // Генерация 10 тематических блоков
   autoCreatedBlocks.value = informaticsTopics.map((topic) => ({
     title: topic,
     items: [
@@ -373,19 +366,7 @@ const viewExistingCourses = () => {
 };
 
 const goToMainPage = () => {
-  if (course.value.blocks.length > 0 || course.value.title || course.value.description) {
-    $q.dialog({
-      title: 'Подтверждение',
-      message: 'У вас есть несохранённые изменения. Вы уверены, что хотите выйти?',
-      cancel: true,
-      persistent: true
-    }).onOk(() => {
-      localStorage.removeItem('courseDraft');
-      router.push('/');
-    });
-  } else {
-    router.push('/');
-  }
+  router.push('/');
 };
 
 const confirmSubmit = () => {
@@ -397,29 +378,11 @@ const submitCourse = async () => {
   isSubmitting.value = true;
   
   try {
-    const blockIds = await Promise.all(
-      course.value.blocks.map(async (block, index) => {
-        const blockData = {
-          name: block.title || `${blockTitles[block.type]} ${index + 1}`,
-          description: block.content || '',
-          tegs: [],
-          test_numbers: [],
-          lecture_numbers: [],
-          lab_numbers: []
-        };
-        
-        const createdBlock = await coursesStore.createInformationBlock(blockData);
-        return createdBlock.id;
-      })
-    );
-
-    const courseData = {
-      name: course.value.title,
-      description: course.value.description,
-      information_blocks: blockIds
-    };
+    // Здесь должна быть логика сохранения курса
+    console.log('Создание курса:', course.value);
     
-    await coursesStore.createNewCourse(courseData);
+    // Имитация задержки сохранения
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     $q.notify({
       type: 'positive',
@@ -428,7 +391,6 @@ const submitCourse = async () => {
       timeout: 2000
     });
     
-    localStorage.removeItem('courseDraft');
     router.push('/');
   } catch (error) {
     console.error('Ошибка создания курса:', error);
@@ -436,7 +398,6 @@ const submitCourse = async () => {
     $q.notify({
       type: 'negative',
       message: 'Ошибка создания курса',
-      caption: error instanceof Error ? error.message : 'Неизвестная ошибка',
       position: 'top'
     });
   } finally {
