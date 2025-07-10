@@ -97,6 +97,10 @@
                     <q-item-label caption>{{ lecture.path }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
+                    <q-btn flat round icon="play_circle" color="primary"
+                      
+                        @click="openLecture(Number(lecture.id))"
+                      />
                     <q-btn
                       flat
                       round
@@ -105,6 +109,8 @@
                       @click="deleteLecture(lecture.id)"
                       :disable="!change"
                     />
+                    
+                      
                   </q-item-section>
                 </q-item>
               </q-list>
@@ -146,6 +152,14 @@
                     <q-item-label>{{ lab.id }}. {{ lab.name }}</q-item-label>
                   </q-item-section>
                   <q-item-section side>
+                     <q-btn
+                        flat
+                        round
+                        icon="edit"
+                        color="primary"
+                        @click="openLabResponse(lab.id)"
+                        
+                      />
                     <q-btn
                       flat
                       round
@@ -273,6 +287,78 @@
       </q-tab-panel>
     </q-tab-panels>
   </div>
+  <!--Лекции-->
+  <q-dialog v-model="lectureDialog" persistent>
+        <q-card v-if="currentLecture.url" style="width: 70vh; max-width: 900px;">
+            <q-card-section  class="row items-center q-pb-none">
+              <div class="text-h6">{{ currentLecture.title }}</div>
+              <q-space />
+              <q-btn icon="close" flat round dense v-close-popup />
+            </q-card-section>
+            <q-card-section >
+              <video 
+                controls 
+                style="width: 100%; max-height: 70vh; object-fit: contain;"
+                :src="currentLecture.url"
+              ></video>
+            </q-card-section>
+          </q-card>
+      </q-dialog>
+      <!--Лабораторные-->
+      <q-dialog v-model="labDialog" persistent>
+        <q-card style="width: 700px; max-width: 80vw;">
+          <q-card-section>
+            <div class="text-h6"> {{ currentLab.title }}</div>
+            
+            <!-- Состояние загрузки -->
+            <div v-if="loadingFiles" class="text-center q-pa-md">
+              <q-spinner size="md" color="primary" />
+              <div>Загрузка файлов...</div>
+            </div>
+            
+            <!-- Список файлов -->
+            <div v-else>
+              <div class="text-subtitle1 q-mb-sm">Файлы лабораторной:</div>
+              <q-list bordered separator v-if="labFiles.length">
+                <q-item 
+                  v-for="(file, index) in labFiles" 
+                  :key="index"
+                  clickable
+                  @click="downloadLabFile(file.path)"
+                >
+                  <q-item-section avatar>
+                    <q-icon name="description" />
+                  </q-item-section>
+                  <q-item-section>
+                    <q-item-label>{{ file.name }}</q-item-label>
+                  </q-item-section>
+                  <q-item-section side>
+                    <q-btn icon="download" flat round dense />
+                  </q-item-section>
+                </q-item>
+              </q-list>
+              
+              <div v-else class="text-grey text-center q-pa-md">
+                Нет доступных файлов
+              </div>
+            </div>
+            
+            <!-- Форма для загрузки ответа -->
+            <div class="q-mt-md">
+              <q-file
+                v-model="labAnswerFile"
+                label="Загрузить новый файл"
+                :disable="!change"
+              />
+            </div>
+          </q-card-section>
+          
+          <q-card-actions align="right">
+            <q-btn flat label="Отправить" color="primary" @click="submitLab" :disable="!change"/>
+            <q-btn flat label="Закрыть" color="primary" v-close-popup />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
 </template>
 
 <script setup lang="ts">
@@ -280,7 +366,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import{InformBlocksStatus} from '../../../backend/src/common/types';
-
+import { ContentHandler } from './fileHandler';
 const $q = useQuasar();
 const router = useRouter();
 const route =useRoute();
@@ -297,6 +383,22 @@ const creatingBlock = ref(false);
 const updatingBlock = ref(false);
 const blockId =route.params.block;
 
+const lectureDialog = ref(false);
+const currentLecture = ref({
+  title: '',
+  url: ''
+});
+
+// Состояние для лабораторных работ
+const labDialog = ref(false);
+const currentLab = ref({
+  title: '',
+  path: '',
+  number: 0
+});
+const labFiles = ref<{name: string, path: string}[]>([]);
+const loadingFiles = ref(false);
+const labAnswerFile = ref<File | null>(null);
 // Данные для нового блока
 const newBlock = ref({
   name: '',
@@ -343,6 +445,138 @@ const goToMainPage = () => {
   router.push('/');
 };
 
+const submitLab = async() => {
+  if (labAnswerFile.value && selectedBlock.value && change) {
+    console.log(labs.value[currentLab.value.number-1].id)
+    await uploadFile(labAnswerFile.value,`${selectedBlock.value.id}_${selectedBlock.value.name}/${labs.value[currentLab.value.number-1].id}`)
+    labDialog.value = false;
+    labAnswerFile.value = null;
+
+  } else {
+    
+  }
+};
+const uploadFile = async (file: File,Path: string): Promise<string | null> => {
+  if (!file) return null;
+  console.log(Path)
+  try {
+    const formData = new FormData();
+    
+    // 1. Кодируем имя файла для передачи
+    const encodedFileName = encodeURIComponent(file.name);
+    formData.append('file', new File([file], encodedFileName, { type: file.type }));
+    formData.append('path', `${(`${Path}`)}`);
+    
+    const response = await fetch(`${process.env.API_ENDPOINT}/upload`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Accept-Charset': 'utf-8'
+      }
+    });
+    
+    if (!response.ok) throw new Error('Upload failed');
+    
+    const result = await response.json();
+    return `image:${result.files[0].originalname}`; // Возвращаем оригинальное имя
+  } catch (error) {
+    console.error('Upload error:', error);
+    return null;
+  }
+};
+const downloadLabFile = async (filePath: string) => {
+  try {
+    const response = await fetch(`${process.env.API_ENDPOINT}/json-reader?path=${encodeURIComponent(filePath)}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Получаем blob (бинарные данные файла)
+    const blob = await response.blob();
+    
+    // Создаем URL для скачивания
+    const downloadUrl = window.URL.createObjectURL(blob);
+    
+    // Создаем временную ссылку для скачивания
+    const a = document.createElement('a');
+    a.href = downloadUrl;
+    
+    // Извлекаем имя файла из пути
+    const fileName = filePath.split('/').pop() || 'download';
+    a.download = fileName;
+    
+    // Добавляем ссылку в DOM и кликаем
+    document.body.appendChild(a);
+    a.click();
+    
+    // Убираем ссылку после скачивания
+    window.URL.revokeObjectURL(downloadUrl);
+    a.remove();
+    
+    return true; // Успешное скачивание
+  } catch (error) {
+    console.error('Error downloading file:', error);
+    return false; // Ошибка при скачивании
+  }
+};
+const openLabResponse = async (labNum: number) => {
+  try {
+    const blockPath=`${selectedBlock.value.id}_${selectedBlock.value.name}`;
+    let cleanName ='';
+    loadingFiles.value = true;
+    labFiles.value = await ContentHandler.getLabFiles(blockPath, labNum);
+    const filesread =labFiles.value;
+    for (const fileName of filesread) {
+    if (fileName.name.startsWith('lab_')) {
+      cleanName = fileName.name.replace(/^lab_/, '').replace(/\.[^/.]+$/, '');
+      console.log(cleanName);
+    }
+}
+    currentLab.value = {
+      title: cleanName,
+      path: blockPath,
+      number: labNum
+    };
+    labDialog.value = true;
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Ошибка загрузки файлов лабораторной работы',
+      position: 'top'
+    });
+    console.error('Ошибка загрузки файлов:', error);
+  } finally {
+    loadingFiles.value = false;
+  }
+};
+
+const openLecture = async (lectureNum: number) => {
+  
+  try {
+    const blockName=selectedBlock.value.name;
+    const lPath=`${selectedBlock.value.id}_${selectedBlock.value.name}`;
+    const idLecture=lectures.value.findIndex(lectureh => lectureh.id === lectureNum);
+    const lecture = await ContentHandler.getLectureInfo(blockName, lectureNum,lPath,idLecture);
+    if (!lecture?.url) {
+      throw new Error('Видео лекции недоступно');
+    }
+
+    currentLecture.value = {
+      title: `${lecture.number}. ${lecture.name}`,
+      url: `${lecture.url}`
+    };
+    
+    lectureDialog.value = true;
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: 'Не удалось открыть лекцию',
+      caption: error instanceof Error ? error.message : 'Попробуйте позже',
+      position: 'top'
+    });
+  }
+};
 // Загрузка всех блоков
 const loadBlocks = async () => {
   try {
