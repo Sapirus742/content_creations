@@ -216,6 +216,7 @@ import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useCoursesStore } from '../stores/courses.store';
+import {InformBlocksStatus } from '../../../backend/src/common/types';
 
 
 const router = useRouter();
@@ -402,7 +403,7 @@ const submitCourse = async () => {
         const blockData = {
           name: block.title || `${blockTitles[block.type]} ${index + 1}`,
           description: block.content || '',
-          tegs: [],
+          status: InformBlocksStatus.changing,
           test_numbers: [],
           lecture_numbers: [],
           lab_numbers: []
