@@ -40,14 +40,20 @@
       <div class="text-h5 q-mb-md">Найдено курсов: {{ courses.length }}</div>
       
       <q-list bordered separator>
-        <q-item 
+        <q-expansion-item
           v-for="course in courses" 
           :key="course.id"
-          class="q-mb-md"
+          class="q-mb-md course-item"
+          style = "margin-bottom: 0px;"
+          :label="course.name"
+          :caption="course.description"
         >
-          <q-item-section>
-            <q-item-label class="text-h6">{{ course.name }}</q-item-label>
-            <q-item-label caption>{{ course.description }}</q-item-label>
+          <template v-slot:header>
+            <q-item-section>
+              <q-item-label class="text-h6">{{ course.name }}</q-item-label>
+              <q-item-label caption>{{ course.description }}</q-item-label>
+            </q-item-section>
+          </template>
             
             <!-- Аккордеон для блоков курса -->
             <q-expansion-item
@@ -123,8 +129,7 @@
                 </q-list>
               </div>
             </q-expansion-item>
-          </q-item-section>
-        </q-item>
+        </q-expansion-item>
       </q-list>
 
       <div v-if="!courses.length" class="text-center q-pa-xl text-grey">
