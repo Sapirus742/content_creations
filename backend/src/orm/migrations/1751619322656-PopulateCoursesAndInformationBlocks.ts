@@ -80,7 +80,7 @@ export class PopulateCoursesAndInformationBlocks1751619322656 implements Migrati
       ((SELECT id FROM courses WHERE name = 'Информатика'), (SELECT id FROM information_blocks WHERE name = 'Основы информатики; понятие информации, её виды, свойства и кодирование данных')),
       ((SELECT id FROM courses WHERE name = 'Информатика'), (SELECT id FROM information_blocks WHERE name = 'Основы информатики; системы счисления, математическая логика и логические элементы ЭВМ')),
       ((SELECT id FROM courses WHERE name = 'Информатика'), (SELECT id FROM information_blocks WHERE name = 'Информатика; история вычислительной техники и основы работы в Microsoft Word')),
-      ((SELECT id FROM courses WHERE name = 'Информатика'), (SELECT id FROM information_blocks WHERE name = 'Программное обеспечение; классификация, операционные системы и работа с Windows/Unix')),
+      ((SELECT id FROM courses WHERE name = 'Информатика'), (SELECT id FROM information_blocks WHERE name = 'Программное обеспечение; классификация, операционные системы и работа с Windows и Unix')),
       ((SELECT id FROM courses WHERE name = 'Информатика'), (SELECT id FROM information_blocks WHERE name = 'Освоение Word и Excel; документы, таблицы и визуализация')),
       ((SELECT id FROM courses WHERE name = 'Информатика'), (SELECT id FROM information_blocks WHERE name = 'Создание презентаций, работа с графикой и базами данных; профессиональные инструменты в Microsoft Office')),
       ((SELECT id FROM courses WHERE name = 'Информатика'), (SELECT id FROM information_blocks WHERE name = 'Эволюция компьютерных сетей от локальных экспериментов к глобальному интернету')),

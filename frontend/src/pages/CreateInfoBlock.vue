@@ -53,16 +53,33 @@
       <q-tab-panel name="edit">
         <div class="row q-col-gutter-md">
           <div class="col-12">
-            <q-select
+           <q-select
               v-model="selectedBlock"
-              :options="blocks"
+              :options="blockOptions"
               option-label="name"
               label="Выберите блок"
               outlined
               map-options
               emit-value
+              use-input
+              input-debounce="300"
+              @filter="filterBlocks"
               @update:model-value="loadBlockDetails"
-            />
+              
+            >
+              <template v-slot:selected-item="scope">
+                <span>{{ scope.opt.name }} || </span>
+                <span>Поиск:</span>
+              </template>
+              
+              <template v-slot:no-option>
+                <q-item>
+                  <q-item-section class="text-grey">
+                    Ничего не найдено
+                  </q-item-section>
+                </q-item>
+              </template>
+            </q-select>
           </div>
 
           <template v-if="selectedBlock">
@@ -146,15 +163,16 @@
                               @click.stop="moveItemUp(item)" :disable="isFirstItem(item)" />
                         <q-btn flat round icon="arrow_downward" color="primary" 
                               @click.stop="moveItemDown(item)" :disable="isLastItem(item)" />
+                        <q-btn
+                          flat
+                          round
+                          icon="delete"
+                          color="negative"
+                          @click="confirmDelete(item)"
+                          :disable="!change"
+                        />
                       </template>
-                      <q-btn
-                        flat
-                        round
-                        icon="delete"
-                        color="negative"
-                        @click="deleteItem(item.id, item.type)"
-                        :disable="!change"
-                      />
+                      
                     </div>
                   </q-item-section>
                 </q-item>
@@ -339,6 +357,15 @@
                 </q-item-section>
                 <q-item-section side>
                   <q-btn icon="download" flat round dense />
+                  <q-btn 
+                    v-if="change"
+                    icon="delete" 
+                    flat 
+                    round 
+                    dense 
+                    color="negative"
+                    @click.stop="confirmDeleteLabFile(file)"
+                  />
                 </q-item-section>
               </q-item>
             </q-list>
@@ -364,6 +391,51 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+    <!--Диалог для удаления материала-->
+    <q-dialog v-model="confirmDeleteDialog" persistent>
+  <q-card style="min-width: 300px">
+    <q-card-section>
+      <div class="text-h6">Подтверждение удаления</div>
+    </q-card-section>
+
+    <q-card-section class="q-pt-none">
+      Вы уверены, что хотите удалить этот элемент?
+    </q-card-section>
+
+    <q-card-actions align="right">
+      <q-btn flat label="Отмена" color="primary" v-close-popup />
+      <q-btn 
+        flat 
+        label="Удалить" 
+        color="negative" 
+        @click="executeDelete"
+      />
+    </q-card-actions>
+  </q-card>
+</q-dialog>
+  <!-- Диалог подтверждения удаления файла лабораторной -->
+  <q-dialog v-model="confirmFileDeleteDialog" persistent>
+    <q-card style="min-width: 300px">
+      <q-card-section>
+        <div class="text-h6">Подтверждение удаления файла</div>
+      </q-card-section>
+
+      <q-card-section class="q-pt-none">
+        Вы уверены, что хотите удалить файл "{{ fileToDelete?.name }}"?
+      </q-card-section>
+
+      <q-card-actions align="right">
+        <q-btn flat label="Отмена" color="primary" v-close-popup />
+        <q-btn 
+          flat 
+          label="Удалить" 
+          color="negative" 
+          @click="deleteLabFile"
+          v-close-popup
+        />
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
   </div>
 </template>
 
@@ -390,14 +462,18 @@ const selectedBlock = ref<any>(null);
 const creatingBlock = ref(false);
 const updatingBlock = ref(false);
 const blockId = route.params.block;
-
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+const blockOptions = ref<any[]>([]);
 // Диалоговые окна
 const addLectureDialog = ref(false);
 const addLabDialog = ref(false);
 const addTestDialog = ref(false);
 const lectureDialog = ref(false);
 const labDialog = ref(false);
-
+const confirmDeleteDialog = ref(false);
+const itemToDelete = ref<{id: number, type: string} | null>(null);
+const confirmFileDeleteDialog = ref(false);
+const fileToDelete = ref<{path: string, name: string} | null>(null);
 // Текущие элементы
 const currentLecture = ref({
   title: '',
@@ -966,9 +1042,47 @@ const uploadTest = async () => {
 const deleteItem = async (id: number, type: string) => {
   if (!change || !selectedBlock.value) return;
   try {
-    console.log(`Deleting ${type} with id ${id}`);
-    // Здесь должна быть реализация удаления элемента
-    // В зависимости от типа (lecture, lab, test) вызываем соответствующую функцию
+    let nameL;
+     if(type=='lecture'){
+          
+          const lecture = sortedMaterials.value.find(item => 
+              item.type === 'lecture' && item.id === id
+          );
+          nameL=`${lecture.name}.mp4`;
+        }
+      console.log(nameL);
+    const materialsToShift = sortedMaterials.value.filter(m => m.id > id);
+     for (const material of materialsToShift) {
+        await moveItemUp(material);
+     }
+     const idDelete =getNextId()-1;
+     try {
+        const blockPath = `${selectedBlock.value.id}_${selectedBlock.value.name}`;
+        let pathToDelete = '';
+        pathToDelete = `${idDelete}`;
+        if(type=='lecture'){
+          pathToDelete=`${idDelete}_${nameL}`;
+        }
+        // Определяем путь в зависимости от типа элемента
+        
+        if (!pathToDelete) {
+          throw new Error('Не удалось определить путь для удаления');
+        }
+        pathToDelete=`${blockPath}/${pathToDelete}`
+        // Отправляем запрос на удаление
+        console.log(pathToDelete);
+        const response = await fetch(`${API_ENDPOINT}/deletefiles?path=${encodeURIComponent(pathToDelete)}`, {
+          method: 'DELETE'
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Ошибка при удалении');
+        }
+        await loadBlockDetails();
+    } catch (error) {
+        console.error(`Ошибка удаления ${type}:`, error);
+    }
   } catch (error) {
     console.error(`Ошибка удаления ${type}:`, error);
   }
@@ -1165,10 +1279,60 @@ const moveItemDown = async (item: {id: number, type: string}) => {
   }
 };
 
+const confirmDelete = (item: {id: number, type: string}) => {
+  itemToDelete.value = item;
+  confirmDeleteDialog.value = true;
+};
 
+const executeDelete = async () => {
+  if (itemToDelete.value) {
+    await deleteItem(itemToDelete.value.id, itemToDelete.value.type);
+    confirmDeleteDialog.value = false;
+    itemToDelete.value = null;
+  }
+};
+const confirmDeleteLabFile = (file: {path: string, name: string}) => {
+  fileToDelete.value = file;
+  confirmFileDeleteDialog.value = true;
+};
+const deleteLabFile = async () => {
+  if (!fileToDelete.value) return;
+
+  try {
+    const response = await fetch(`${API_ENDPOINT}/deletefiles?path=${encodeURIComponent(fileToDelete.value.path)}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) throw new Error('Ошибка при удалении файла');
+
+    // Обновляем список файлов
+    await openLabResponse(currentLab.value.number);
+   
+  } catch (error) {
+    console.error('Ошибка удаления файла:', error);
+  } finally {
+    fileToDelete.value = null;
+  }
+};
+const filterBlocks = (val: string, update: (callback: () => void) => void) => {
+  if (val === '') {
+    update(() => {
+      blockOptions.value = blocks.value;
+    });
+    return;
+  }
+
+  update(() => {
+    const needle = val.toLowerCase();
+    blockOptions.value = blocks.value.filter(
+      block => block.name.toLowerCase().includes(needle)
+    );
+  });
+};
 // Инициализация
 onMounted(async () => {
   await loadBlocks();
+  blockOptions.value = blocks.value;
   if (blockId != '0') {
     selectedBlock.value = blocks.value[Number(blockId)-1];
     loadBlockDetails();
