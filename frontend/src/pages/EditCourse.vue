@@ -494,7 +494,8 @@ const updateCourse = async () => {
       description: editCourse.value.description,
       information_blocks: editCourse.value.blocks.map(block => block.id)
     };
-    
+    const courseIsNull={information_blocks:[editCourse.value.blocks.map(block => block.id)[0]]}
+    await update(selectedCourse.value, courseIsNull);
     await update(selectedCourse.value, courseData);
     
     $q.notify({
