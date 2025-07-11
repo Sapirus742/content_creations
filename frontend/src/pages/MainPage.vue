@@ -43,7 +43,7 @@
             <q-btn
               color="secondary"
               label="Редактировать созданные"
-              icon="add"
+              icon="edit"
               to="/edit-course"
             />
           </div>
