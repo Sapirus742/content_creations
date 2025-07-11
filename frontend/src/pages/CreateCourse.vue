@@ -75,32 +75,72 @@
 
       <!-- Шаг 3: Контент (ручное создание) -->
       <q-step name="manual-content" title="Содержание курса" icon="library_books" v-if="selectedMethod === 'manual'">
-        <div class="text-h6 q-mb-md">Добавьте материалы курса</div>
+        <div class="text-h6 q-mb-md">Добавьте информационные блоки в курс</div>
+        
         <div class="row q-gutter-md q-mb-md">
           <q-btn
               color="secondary"
               label="Редактор блоков"
               to="create-block/create/0"
             />
-          <q-btn 
-            color="primary" 
-            icon="add" 
-            label="Блок" 
-            @click="addBlock('lecture')"
+          <q-btn
+            color="primary"
+            icon="add"
+            label="Добавить блок"
+            @click="showBlockDialog = true"
           />
         </div>
+        
+        <q-dialog v-model="showBlockDialog" persistent>
+          <q-card style="min-width: 500px">
+            <q-card-section>
+              <div class="text-h6">Выберите информационный блок</div>
+            </q-card-section>
+
+            <q-card-section>
+              <q-select
+                v-model="selectedInfoBlock"
+                :options="infoBlocks"
+                option-label="name"
+                label="Информационный блок"
+                outlined
+                use-input
+                input-debounce="300"
+                @filter="filterBlocks"
+              >
+                <template v-slot:no-option>
+                  <q-item>
+                    <q-item-section class="text-grey">
+                      Ничего не найдено
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-select>
+            </q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="Отмена" color="primary" v-close-popup />
+              <q-btn 
+                flat 
+                label="Добавить" 
+                color="primary" 
+                @click="addInfoBlock"
+                :disable="!selectedInfoBlock"
+              />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
         
         <q-list bordered separator>
           <q-item v-for="(block, index) in course.blocks" :key="index">
             <q-item-section avatar>
-              <q-icon :name="blockIcons[block.type]" :color="blockColors[block.type]" />
+              <q-icon name="widgets" color="primary" />
             </q-item-section>
             <q-item-section>
-              <q-item-label>{{ blockTitles[block.type] }} {{ index + 1 }}</q-item-label>
-              <q-item-label caption v-if="block.title">{{ block.title }}</q-item-label>
+              <q-item-label>{{ block.name }}</q-item-label>
+              <q-item-label caption v-if="block.description">{{ block.description }}</q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-btn icon="edit" flat round @click="editBlock(index)" />
               <q-btn icon="delete" flat round @click="removeBlock(index)" />
             </q-item-section>
           </q-item>
@@ -212,12 +252,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { useCoursesStore } from '../stores/courses.store';
-import {InformBlocksStatus } from '../../../backend/src/common/types';
-
 
 const router = useRouter();
 const $q = useQuasar();
@@ -230,18 +268,29 @@ const autoCreationInProgress = ref(false);
 const autoCreationProgress = ref(0);
 const autoCreatedBlocks = ref<AutoBlockGroup[]>([]);
 const showConfirmDialog = ref(false);
+const showBlockDialog = ref(false);
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+const infoBlocks = ref<any[]>([]);
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+const selectedInfoBlock = ref<any>(null);
+//eslint-disable-next-line @typescript-eslint/no-explicit-any
+const allInfoBlocks = ref<any[]>([]);
 
 type BlockType = 'lecture' | 'practice' | 'test';
 
 interface CourseBlock {
-  type: BlockType;
-  title?: string;
-  content?: string;
+  id: number;
+  name: string;
+  description: string;
 }
 
 interface AutoBlockGroup {
   title: string;
-  items: CourseBlock[];
+  items: {
+    type: BlockType;
+    title: string;
+    content: string;
+  }[];
 }
 
 interface Course {
@@ -287,9 +336,67 @@ const informaticsTopics = [
   'Компьютерная графика'
 ];
 
-watch(course, (newVal) => {
-  localStorage.setItem('courseDraft', JSON.stringify(newVal));
-}, { deep: true });
+onMounted(async () => {
+  await loadInfoBlocks();
+});
+
+const loadInfoBlocks = async () => {
+  try {
+    const response = await fetch(`${process.env.API_ENDPOINT || 'http://localhost:3000'}/inform_blocks`);
+    if (!response.ok) throw new Error('Ошибка загрузки информационных блоков');
+    allInfoBlocks.value = await response.json();
+    infoBlocks.value = allInfoBlocks.value.filter(block => block.status === 'Ready');
+  } catch (error) {
+    console.error('Ошибка загрузки информационных блоков:', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Не удалось загрузить информационные блоки',
+      position: 'top'
+    });
+  }
+};
+
+const filterBlocks = (val: string, update: (callback: () => void) => void) => {
+  if (val === '') {
+    update(() => {
+      infoBlocks.value = allInfoBlocks.value.filter(block => block.status === 'Ready');
+    });
+    return;
+  }
+
+  update(() => {
+    const needle = val.toLowerCase();
+    infoBlocks.value = allInfoBlocks.value.filter(
+      block => block.status === 'Ready' && block.name.toLowerCase().includes(needle)
+    );
+  });
+};
+
+const addInfoBlock = () => {
+  if (selectedInfoBlock.value && selectedInfoBlock.value.status == 'Ready') {
+    // Проверяем, не добавлен ли уже этот блок
+    const alreadyAdded = course.value.blocks.some(
+      block => block.id === selectedInfoBlock.value.id
+    );
+    
+    if (!alreadyAdded) {
+      course.value.blocks.push({
+        id: selectedInfoBlock.value.id,
+        name: selectedInfoBlock.value.name,
+        description: selectedInfoBlock.value.description
+      });
+    } else {
+      $q.notify({
+        type: 'warning',
+        message: 'Этот информационный блок уже добавлен в курс',
+        position: 'top'
+      });
+    }
+    
+    selectedInfoBlock.value = null;
+    showBlockDialog.value = false;
+  }
+};
 
 const startManualCreation = () => {
   selectedMethod.value = 'manual';
@@ -335,30 +442,27 @@ const generateAutoCreatedBlocks = () => {
   }));
 };
 
-const addBlock = (type: BlockType) => {
-  course.value.blocks.push({
-    type,
-    title: '',
-    content: ''
-  });
-};
-
-const editBlock = (index: number) => {
-  console.log('Редактирование блока:', index);
-};
-
 const removeBlock = (index: number) => {
   course.value.blocks.splice(index, 1);
 };
 
-const addAutoBlock = (block: CourseBlock) => {
-  course.value.blocks.push({ ...block });
+const addAutoBlock = (block: {type: BlockType, title: string, content: string}) => {
+  // Для автоматического создания преобразуем в формат информационного блока
+  course.value.blocks.push({
+    id: Date.now(), // Временный ID, будет заменен при сохранении
+    name: block.title,
+    description: block.content
+  });
 };
 
 const addAllBlocks = () => {
   autoCreatedBlocks.value.forEach(group => {
     group.items.forEach(block => {
-      course.value.blocks.push({ ...block });
+      course.value.blocks.push({
+        id: Date.now(), // Временный ID, будет заменен при сохранении
+        name: block.title,
+        description: block.content
+      });
     });
   });
 };
@@ -381,7 +485,6 @@ const goToMainPage = () => {
       cancel: true,
       persistent: true
     }).onOk(() => {
-      localStorage.removeItem('courseDraft');
       router.push('/');
     });
   } else {
@@ -398,26 +501,10 @@ const submitCourse = async () => {
   isSubmitting.value = true;
   
   try {
-    const blockIds = await Promise.all(
-      course.value.blocks.map(async (block, index) => {
-        const blockData = {
-          name: block.title || `${blockTitles[block.type]} ${index + 1}`,
-          description: block.content || '',
-          status: InformBlocksStatus.ready,
-          test_numbers: [],
-          lecture_numbers: [],
-          lab_numbers: []
-        };
-        
-        const createdBlock = await coursesStore.createInformationBlock(blockData);
-        return createdBlock.id;
-      })
-    );
-
     const courseData = {
       name: course.value.title,
       description: course.value.description,
-      information_blocks: blockIds
+      information_blocks: course.value.blocks.map(block => block.id)
     };
     
     await coursesStore.createNewCourse(courseData);
@@ -429,7 +516,6 @@ const submitCourse = async () => {
       timeout: 2000
     });
     
-    localStorage.removeItem('courseDraft');
     router.push('/');
   } catch (error) {
     console.error('Ошибка создания курса:', error);

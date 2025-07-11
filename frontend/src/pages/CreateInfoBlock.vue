@@ -552,7 +552,7 @@ const toEdit = () => {
 };
 
 const goToMainPage = () => {
-  router.push('/');
+  router.push('/create-course');
 };
 
 const showAddLectureDialog = () => {
@@ -698,7 +698,9 @@ const loadBlocks = async () => {
   try {
     const response = await fetch(`${API_ENDPOINT}/inform_blocks`);
     if (!response.ok) throw new Error('Ошибка загрузки блоков');
-    blocks.value = await response.json();
+    const data = await response.json();
+    // Сортируем блоки по id
+    blocks.value = data.sort((a: {id: number}, b: {id: number}) => a.id - b.id);
   } catch (error) {
     console.error('Ошибка загрузки блоков:', error);
   }
@@ -748,7 +750,7 @@ const copyBlock = async () => {
     }
     
     tab.value = 'edit';
-    router.push(`/create-block/edit/${blocks.value.length+1}`).then(() => {
+    router.push(`/create-block/edit/${data.id}`).then(() => {
       window.location.reload();
     });
     loadBlockDetails();
@@ -784,7 +786,8 @@ const createBlock = async () => {
     await loadBlocks();
     tab.value = 'edit';
     selectedBlock.value = data;
-    router.push(`/create-block/edit/${blocks.value.length+1}`).then(() => {
+    console.log(data.id)
+    router.push(`/create-block/edit/${data.id}`).then(() => {
       window.location.reload();
     });
     loadBlockDetails();
@@ -796,8 +799,8 @@ const createBlock = async () => {
 };
 
 const loadBlockDetails = async () => {
-  if (blocks.value.indexOf(selectedBlock.value) != Number(blockId)-1) {
-    router.push(`/create-block/edit/${blocks.value.indexOf(selectedBlock.value)+1}`).then(() => {
+  if (selectedBlock.value.id != Number(blockId)) {
+    router.push(`/create-block/edit/${selectedBlock.value.id}`).then(() => {
       window.location.reload();
     });
     return;
@@ -952,7 +955,7 @@ const uploadLecture = async () => {
     });
 
     if (!response.ok) throw new Error('Ошибка загрузки лекции');
-
+    await updateBlock();
     await loadBlockDetails();
     newLectureFile.value = null;
     newLectureName.value = '';
@@ -986,7 +989,7 @@ const uploadLab = async () => {
     });
 
     if (!response.ok) throw new Error('Ошибка загрузки лабораторной');
-
+    await updateBlock();
     await loadBlockDetails();
     newLabFile.value = null;
     newLabName.value = '';
@@ -1030,7 +1033,7 @@ const uploadTest = async () => {
     });
 
     if (!response.ok) throw new Error('Ошибка загрузки теста');
-
+    await updateBlock();
     await loadBlockDetails();
     newTestFile.value = null;
     addTestDialog.value = false;
@@ -1079,6 +1082,7 @@ const deleteItem = async (id: number, type: string) => {
           const errorData = await response.json();
           throw new Error(errorData.message || 'Ошибка при удалении');
         }
+        await updateBlock();
         await loadBlockDetails();
     } catch (error) {
         console.error(`Ошибка удаления ${type}:`, error);
@@ -1098,7 +1102,7 @@ const editTest = (id: number) => {
 
 const updateBlock = async () => {
   if (!change || !selectedBlock.value) return;
-
+  await loadBlockDetails();
   updatingBlock.value = true;
   try {
     const response = await fetch(`${API_ENDPOINT}/inform_blocks/${selectedBlock.value.id}`, {
@@ -1117,7 +1121,7 @@ const updateBlock = async () => {
 
     if (!response.ok) throw new Error('Ошибка обновления блока');
 
-    await loadBlocks();
+    
   } catch (error) {
     $q.notify({
       type: 'negative',
@@ -1217,6 +1221,7 @@ const swapItems = async (item1: {id: number, type: string}, item2: {id: number, 
     await renameItem(tempPath1, path1new);
     
     // Обновляем данные
+    await updateBlock();
     await loadBlockDetails();
   } catch (error) {
     console.error('Ошибка при перемещении элементов:', error);
@@ -1334,7 +1339,7 @@ onMounted(async () => {
   await loadBlocks();
   blockOptions.value = blocks.value;
   if (blockId != '0') {
-    selectedBlock.value = blocks.value[Number(blockId)-1];
+    selectedBlock.value = blocks.value.find(block => block.id ===Number(blockId));
     loadBlockDetails();
   }
   change = InformBlocksStatus.changing == selectedBlock.value?.status;
