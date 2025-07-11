@@ -29,6 +29,11 @@ const routes: RouteRecordRaw[] = [
         props: true // Передаёт параметры маршрута как props
       },
       {
+        path: 'edit-course',
+        name: 'EditCourse',
+        component: () => import('pages/EditCourse.vue')
+      },
+      {
         path: 'create-course',
         name: 'CreateCourse',
         component: () => import('pages/CreateCourse.vue')
