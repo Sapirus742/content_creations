@@ -444,7 +444,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { InformBlocksStatus } from '../../../backend/src/common/types';
-import { ContentHandler } from './fileHandler';
+import { ContentHandler } from '../components/fileHandler';
 
 const $q = useQuasar();
 const router = useRouter();

@@ -218,7 +218,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { getAll } from '../api/courses.api';
 import { CoursesDto } from '../../../backend/src/common/types';
-import { ContentHandler } from './fileHandler';
+import { ContentHandler } from '../components/fileHandler';
 
 const $q = useQuasar();
 const route = useRoute();
