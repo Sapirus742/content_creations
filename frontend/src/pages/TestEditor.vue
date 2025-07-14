@@ -726,11 +726,13 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+// Оставляем только специфичные стили
 .q-item {
   cursor: pointer;
-}
-.q-item:hover {
-  background-color: #f5f5f5;
+  
+  &:hover {
+    background-color: #f5f5f5;
+  }
 }
 </style>

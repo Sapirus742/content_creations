@@ -516,38 +516,8 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped>
-.video-wrapper {
-  position: relative;
-  padding-bottom: 56.25%; /* 16:9 соотношение сторон */
-  height: 0;
-  overflow: hidden;
-}
-
-.q-item {
-  transition: all 0.3s ease;
-}
-
-.q-item:hover {
-  background-color: #f5f5f5;
-}
-
-.q-btn--outline {
-  border: 1px solid currentColor;
-}
-
-.video-container {
-  padding: 16px;
-  background: #000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.q-card {
-  overflow: visible; /* Важно для корректного отображения */
-}
-
+<style lang="scss" scoped>
+// Оставляем только специфичные стили
 .video-container iframe,
 .video-container video {
   position: absolute;
@@ -555,25 +525,5 @@ onMounted(async () => {
   left: 0;
   width: 100%;
   height: 100%;
-}
-
-.q-item__label--caption {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  max-width: none;
-  display: block;
-  margin-top: 8px;
-  color: rgba(0, 0, 0, 0.7);
-}
-
-@media (max-width: 800px) {
-  .q-card {
-    width: 95vw !important;
-  }
-  
-  .video-container {
-    padding: 8px;
-  }
 }
 </style>

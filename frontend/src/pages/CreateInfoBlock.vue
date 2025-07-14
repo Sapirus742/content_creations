@@ -1346,23 +1346,6 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped>
-.q-tab-panel {
-  padding: 16px 0;
-}
-
-.q-item {
-  transition: all 0.3s ease;
-}
-
-.q-item:hover {
-  background-color: #f5f5f5;
-}
-
-.q-btn--outline {
-  border: 1px solid currentColor;
-}
-.q-btn--round {
-  margin: 0 2px;
-}
+<style lang="scss">
+@import '../styles/main-page.scss';
 </style>

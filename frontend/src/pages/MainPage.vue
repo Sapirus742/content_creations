@@ -86,9 +86,6 @@ const searchCourses = () => {
 
 </script>
 
-<style scoped>
-.container {
-  width: 100%;
-  height: 50%;
-}
+<style lang="scss">
+@import '../styles/main-page.scss';
 </style>

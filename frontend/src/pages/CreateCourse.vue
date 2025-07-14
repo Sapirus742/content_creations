@@ -532,14 +532,7 @@ const submitCourse = async () => {
 };
 </script>
 
-<style scoped>
-.q-card {
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.q-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
+<style lang="scss" scoped>
+// Оставляем только специфичные стили, если они есть
+// Основные стили теперь в main-page.scss
 </style>

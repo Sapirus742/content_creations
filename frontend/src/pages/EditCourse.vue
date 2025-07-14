@@ -571,22 +571,6 @@ const courseOptions = computed(() => {
 });
 </script>
 
-<style scoped>
-.q-card {
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.q-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.q-item {
-  transition: all 0.3s ease;
-}
-
-.q-item:hover {
-  background-color: #f5f5f5;
-}
+<style lang="scss" scoped>
+// Оставляем только специфичные стили
 </style>
