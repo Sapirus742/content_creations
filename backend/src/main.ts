@@ -4,8 +4,8 @@ import { json } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors({
-    origin: 'http://localhost:8080', // Фронтенд на 8080
+  app.enableCors({  // CORS для фронта
+    origin: 'http://localhost:9000', 
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
