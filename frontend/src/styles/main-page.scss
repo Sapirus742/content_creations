@@ -1,0 +1,42 @@
+// src/styles/main-page.scss
+@import '../css/quasarvariables.scss'; // Или правильный путь к вашему файлу переменных Quasar
+
+.main-page {
+  .container {
+    width: 100%;
+    height: 50%;
+  }
+
+  .fullscreen {
+    background-color: $grey-2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .platform-title {
+    font-size: $h3;
+    color: $primary;
+    margin-bottom: 8px; // Заменили $sm на конкретное значение
+  }
+
+  .platform-subtitle {
+    font-size: $subtitle1;
+    color: $grey-8;
+  }
+
+  .search-card {
+    padding: 24px; // Заменили $lg на конкретное значение
+  }
+
+  .search-title {
+    font-size: $h5;
+    margin-bottom: 16px; // Заменили $md на конкретное значение
+  }
+
+  .buttons-row {
+    display: flex;
+    justify-content: center;
+    gap: 8px; // Заменили $sm на конкретное значение
+  }
+}
