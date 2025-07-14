@@ -40,6 +40,12 @@
               icon="add"
               to="/create-course"
             />
+            <q-btn
+              color="secondary"
+              label="Редактировать созданные"
+              icon="edit"
+              to="/edit-course"
+            />
           </div>
         </q-card-section>
       </q-card>
