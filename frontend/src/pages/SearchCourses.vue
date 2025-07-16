@@ -112,11 +112,7 @@
                       <q-item-section>
                         <q-item-label>{{ item.number }}. Тест </q-item-label>
                       </q-item-section>
-                      <q-btn 
-                        color="primary" 
-                        label="Изменить" 
-                        @click="editTest(`${item.blockId}_${item.blockName}`, item.number)"
-                      />
+                      
                       <q-item-section side>
                         <q-btn 
                           color="primary" 
@@ -484,18 +480,6 @@ const submitLab = () => {
 const startTest = async (blockName: string, testNum: number) => {
   try {
     router.push(`/test/${blockName}/${testNum}`);
-  } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Ошибка загрузки теста',
-      position: 'top'
-    });
-    console.error('Ошибка загрузки теста:', error);
-  }
-};
-const editTest = async (blockName: string, testNum: number) => {
-  try {
-    router.push(`/edit/${blockName}/${testNum}`);
   } catch (error) {
     $q.notify({
       type: 'negative',
